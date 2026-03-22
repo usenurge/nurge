@@ -37,9 +37,9 @@ if [ -n "${1:-}" ]; then
     VERSION="$1"
 else
     info "Fetching latest version..."
-    VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+    # Try stable release first, fall back to any release (including pre-releases)
+    VERSION=$(curl -sSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' || true)
     if [ -z "$VERSION" ]; then
-        # No stable release yet, try latest pre-release
         VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
     fi
     if [ -z "$VERSION" ]; then
