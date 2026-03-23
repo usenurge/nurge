@@ -237,3 +237,7 @@ connectors
    release cycle.                                         
                                                                                                      
   Want me to flesh this out into a full design?   read this research too
+
+---
+
+write this in docs folder
