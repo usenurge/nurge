@@ -1,0 +1,37 @@
+once setup is done, show other things in startup session hook?, is every thing saved then and there so the setup skill contnues
+
+---
+
+yes and add all the hooks as we said, one at a time which is of prime importance to show up in the start session hook
+
+---
+
+okay I wanna test in local
+
+---
+
+no copy to my folder where I can usee it, also for dev too keep numbering to make sure Im trying the right one
+
+---
+
+okay -
+
+---
+
+show nurge version in the startup session hook, also dont show everything at a time, keep it chaning every compact?
+
+---
+
+now help me understand this how will someone update Nurge? can we add a prompt on session start to check if the version is currently the latet one, else run to update? how dors this work
+
+---
+
+can claude run this in bash?
+
+---
+
+but if its stale why not we auto update?
+
+---
+
+curl -fsSL https://install.nurge.sh | sh
