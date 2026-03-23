@@ -1,0 +1,13 @@
+once setup is done, show other things in startup session hook?, is every thing saved then and there so the setup skill contnues
+
+---
+
+yes and add all the hooks as we said, one at a time which is of prime importance to show up in the start session hook
+
+---
+
+okay I wanna test in local
+
+---
+
+no copy to my folder where I can usee it, also for dev too keep numbering to make sure Im trying the right one
