@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.1",
   "checkpoint_id": "68eee5ce8ae0",
+  "session_id": "8bbc9b02-c949-4ab3-b970-b6c36e03fed4",
   "strategy": "manual-commit",
+  "created_at": "2026-03-23T12:00:24.355832Z",
   "branch": "main",
-  "checkpoints_count": 22,
+  "checkpoints_count": 2,
   "files_touched": [
     "docs/superpowers/specs/2026-03-23-yaml-connector-architecture-design.md",
     "internal/account/auth.go",
@@ -63,25 +65,25 @@
     "internal/util/browser.go",
     "internal/util/callbackserver.go"
   ],
-  "sessions": [
-    {
-      "metadata": "/68/eee5ce8ae0/0/metadata.json",
-      "transcript": "/68/eee5ce8ae0/0/full.jsonl",
-      "content_hash": "/68/eee5ce8ae0/0/content_hash.txt",
-      "prompt": "/68/eee5ce8ae0/0/prompt.txt"
-    },
-    {
-      "metadata": "/68/eee5ce8ae0/1/metadata.json",
-      "transcript": "/68/eee5ce8ae0/1/full.jsonl",
-      "content_hash": "/68/eee5ce8ae0/1/content_hash.txt",
-      "prompt": "/68/eee5ce8ae0/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "6eed45865930",
   "token_usage": {
-    "input_tokens": 424,
-    "cache_creation_tokens": 181427,
-    "cache_read_tokens": 11345305,
-    "output_tokens": 41675,
-    "api_call_count": 173
+    "input_tokens": 233,
+    "cache_creation_tokens": 84567,
+    "cache_read_tokens": 2064160,
+    "output_tokens": 18238,
+    "api_call_count": 32
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-23T12:00:23.773777Z",
+    "agent_lines": 1564,
+    "human_added": 0,
+    "human_modified": 648,
+    "human_removed": 55,
+    "total_committed": 2205,
+    "agent_percentage": 70.9297052154195
   }
 }
