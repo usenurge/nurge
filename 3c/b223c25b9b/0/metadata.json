@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "3cb223c25b9b",
+  "session_id": "14c98a54-48be-4d74-b581-cd0854ce66dd",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-23T12:47:01.682678Z",
+  "branch": "refactor/yaml-connectors",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "211d07275d42",
+  "token_usage": {
+    "input_tokens": 9,
+    "cache_creation_tokens": 20058,
+    "cache_read_tokens": 111107,
+    "output_tokens": 1313,
+    "api_call_count": 5
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-23T12:47:01.634107Z",
+    "agent_lines": 24,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 24,
+    "agent_percentage": 100
+  }
+}
