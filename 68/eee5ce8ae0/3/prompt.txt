@@ -1,0 +1,5 @@
+@docs/superpowers/plans/2026-03-23-session-capture.md can you read thi reiew and create task and build this
+
+---
+
+why is db not existing?
