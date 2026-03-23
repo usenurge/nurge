@@ -3,7 +3,7 @@
   "checkpoint_id": "b111070d7d23",
   "strategy": "manual-commit",
   "branch": "refactor/yaml-connectors",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": null,
   "sessions": [
     {
@@ -11,13 +11,19 @@
       "transcript": "/b1/11070d7d23/0/full.jsonl",
       "content_hash": "/b1/11070d7d23/0/content_hash.txt",
       "prompt": "/b1/11070d7d23/0/prompt.txt"
+    },
+    {
+      "metadata": "/b1/11070d7d23/1/metadata.json",
+      "transcript": "/b1/11070d7d23/1/full.jsonl",
+      "content_hash": "/b1/11070d7d23/1/content_hash.txt",
+      "prompt": "/b1/11070d7d23/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 159,
-    "cache_creation_tokens": 112181,
-    "cache_read_tokens": 9616884,
-    "output_tokens": 44234,
-    "api_call_count": 120
+    "input_tokens": 463,
+    "cache_creation_tokens": 285037,
+    "cache_read_tokens": 19874803,
+    "output_tokens": 101252,
+    "api_call_count": 210
   }
 }
