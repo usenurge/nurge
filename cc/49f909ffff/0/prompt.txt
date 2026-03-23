@@ -1,0 +1,14 @@
+Hey Rejoe, setup in progress.
+       Run /nurge:setup to continue where you left off.  even after setup is complete
+
+---
+
+why? /Users/rejoesudarsan/Projects/my-outbound setup is complete - can you check in my sql?
+
+---
+
+startup session hook don't have Powered by Nurge anyore, Should be powered by Nurge, Next Line Version and then Next Line, Details as per right now
+
+---
+
+yes cool
