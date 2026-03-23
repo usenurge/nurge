@@ -3,7 +3,7 @@
   "checkpoint_id": "68eee5ce8ae0",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 22,
+  "checkpoints_count": 34,
   "files_touched": [
     "docs/superpowers/specs/2026-03-23-yaml-connector-architecture-design.md",
     "internal/account/auth.go",
@@ -75,13 +75,19 @@
       "transcript": "/68/eee5ce8ae0/1/full.jsonl",
       "content_hash": "/68/eee5ce8ae0/1/content_hash.txt",
       "prompt": "/68/eee5ce8ae0/1/prompt.txt"
+    },
+    {
+      "metadata": "/68/eee5ce8ae0/2/metadata.json",
+      "transcript": "/68/eee5ce8ae0/2/full.jsonl",
+      "content_hash": "/68/eee5ce8ae0/2/content_hash.txt",
+      "prompt": "/68/eee5ce8ae0/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 424,
-    "cache_creation_tokens": 181427,
-    "cache_read_tokens": 11345305,
-    "output_tokens": 41675,
-    "api_call_count": 173
+    "input_tokens": 667,
+    "cache_creation_tokens": 343113,
+    "cache_read_tokens": 25007802,
+    "output_tokens": 96406,
+    "api_call_count": 329
   }
 }
