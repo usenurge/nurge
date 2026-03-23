@@ -1,0 +1,91 @@
+We have connectors all build in init, should we move that? from init and do after claude code fires?
+
+---
+
+ye, like ask quesstions to undertand them an then figure out what to connect and show that only?
+
+---
+
+2
+
+---
+
+I have other thoughts entire configure
+Enabled agents: Claude Code
+
+┃ Enable more agents                                                                                      
+┃ Use space to select, enter to confirm.                                                                  
+┃ > [•] Claude Code                                                                                       
+┃   [ ] Copilot CLI                                                                                       
+┃   [ ] Cursor                                                                                            
+┃   [ ] Factory AI Droid                                                                                  
+┃   [ ] Gemini CLI                                                                                        
+┃   [ ] OpenCode  itnit becomes strucutral and rename the code to nurge only
+
+---
+
+Just structre, skill, hooks, and claude activation, here is the problem how can folks add new connectors
+
+---
+
+connectors have to be in backend code, Can it just be a yaml file?
+
+---
+
+all of it
+
+---
+
+so my problem of hardcoding themis the complexity and connector heavy we are going to be.
+
+---
+
+how do openclaw solves this?
+
+---
+
+https://github.com/openclaw/openclaw.git read the repo and tell me how do they do this:
+
+---
+
+see this is an outbound systemm, connectors are everythin
+
+---
+
+what do you think?
+
+---
+
+can we write this better also? internal is spread, we need to arrange this for better readability and aintainance
+
+---
+
+we will build this do this first and then we will dicuss connectors again
+
+---
+
+yes
+
+---
+
+can we think adain
+
+---
+
+Cmds separetley
+
+---
+
+not lets do this
+
+---
+
+dont need spec- write and rewire
+
+---
+
+so what is the best options for us?
+
+---
+
+let it be so
