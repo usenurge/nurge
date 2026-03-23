@@ -1,0 +1,117 @@
+now the setup , needs to be different. first Inderstand the company and what role they do, what is the outbound KPI's to be set and then ask, if they have an outbound setup already done, or if they are starting new, both need two different kind of onbaording?
+
+---
+
+C
+
+---
+
+B, then need to connect with emails to keep reading their data and learn.
+
+---
+
+Understand their tools stack and connect with whaterver we have integrations for
+
+---
+
+B
+
+---
+
+C
+
+---
+
+Ask them if they have emails warmep up? then conenct them now itelf.
+
+---
+
+we get website and then use claude's web fetch to get their website scraped and then process. if they dont have exisitng outbound, Ask the their ICP assumptions + use AI ato give them suggestions which they will accept decline or edit
+
+---
+
+do a deep research on how these things work fro the best outbound playbooks and setups and then tell me how the branching works
+
+---
+
+yes - but do you want to think again and see if we are missing something?
+
+---
+
+yes
+
+---
+
+be also upfront about what all we can do, in temr sof channel we do only email now, Interm of coneectors so
+
+---
+
+Also save name in the beggining to make it personalised
+
+---
+
+yes.
+
+---
+
+okay lets do this
+
+---
+
+yes we since we collect the conversation, this will all be stored in logs?
+
+---
+
+okay rebuild the skill
+
+---
+
+we have 13 skills we write for everyone, is that enough?
+
+---
+
+can we do warmup? how can we do warmup?
+
+---
+
+do what we can do and can we build integrations with a warump service?
+
+---
+
+okay first in docs write about all the skills we build including thee
+
+---
+
+nurge prospects can come in when sending outbound rght? this is etting up
+
+---
+
+we need to generate all the skills that add context.
+
+---
+
+what are th eother skills?
+
+---
+
+do all this and give a report after setup? is that an aha moment?
+
+---
+
+yes. and can we use the webearcg capabilites of claude for research say. if https://www.linkedin.com/in/zacharie-la%C3%AFk-09535aab/?locale=en is a prospect then what all can you find about them
+
+---
+
+https://www.linkedin.com/in/zacharie-la%C3%AFk-09535aab/?locale=en cant we find more about the right person soewhat?
+
+---
+
+if we search for the individual in contact out we might get the person
+
+---
+
+but webseatching with site contactout with the peron and infor might get you, do you wanna try?
+
+---
+
+add this to the doc. will refine later.
