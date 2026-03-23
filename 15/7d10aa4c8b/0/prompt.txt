@@ -8,3 +8,7 @@ why? /Users/rejoesudarsan/Projects/my-outbound setup is complete - can you check
 ---
 
 startup session hook don't have Powered by Nurge anyore, Should be powered by Nurge, Next Line Version and then Next Line, Details as per right now
+
+---
+
+yes cool
