@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "438fadd1ea74",
+  "strategy": "manual-commit",
+  "branch": "refactor/yaml-connectors",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "internal/connector/connector.go",
+    "internal/connector/embed.go",
+    "internal/connector/generic.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/43/8fadd1ea74/0/metadata.json",
+      "transcript": "/43/8fadd1ea74/0/full.jsonl",
+      "content_hash": "/43/8fadd1ea74/0/content_hash.txt",
+      "prompt": "/43/8fadd1ea74/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 165,
+    "cache_creation_tokens": 112931,
+    "cache_read_tokens": 9859005,
+    "output_tokens": 44689,
+    "api_call_count": 122
+  }
+}
