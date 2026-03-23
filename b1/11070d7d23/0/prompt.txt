@@ -1,0 +1,67 @@
+so we want nurge command to init and do everything other than connectors and connectors move to setp?
+
+---
+
+yes. Can you show me a visualisation of what you understood?
+
+---
+
+yes
+
+---
+
+yes.
+
+---
+
+and rename nurge init to nurge and add that details in installation
+
+---
+
+yes
+
+---
+
+dont make implementaation plan create tasks and implement directly
+
+---
+
+i wantant to test in local
+
+---
+
+test nurge first copy the files so that I can test the right version
+
+---
+
+I want to test elsewhere - first Install nurge locally the new version and then let me try myself
+
+---
+
+nurge my-outbound
+Error: unknown command "my-outbound" for "nurge"
+Run 'nurge --help' for usage.
+
+---
+
+same error
+
+---
+
+nurge-setup is my skill,
+
+---
+
+http://localhost:3000/?code=80228517 came back after connecting email
+
+---
+
+No, it was endleslly waiting
+
+---
+
+dashboard is deployed in claudflare
+
+---
+
+I ran nurge setup and it tried connecting my emails
