@@ -1,0 +1,22 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "a19025668a2d",
+  "session_id": "baba78a1-ec05-46ef-881c-7ca49796f797",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-23T15:24:26.668507Z",
+  "branch": "refactor/yaml-connectors",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "turn_id": "37e1ab516df6",
+  "token_usage": {
+    "input_tokens": 5513,
+    "cache_creation_tokens": 174810,
+    "cache_read_tokens": 21176637,
+    "output_tokens": 72795,
+    "api_call_count": 181
+  },
+  "session_metrics": {
+    "turn_count": 43
+  }
+}

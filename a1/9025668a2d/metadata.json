@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "a19025668a2d",
+  "strategy": "manual-commit",
+  "branch": "refactor/yaml-connectors",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/a1/9025668a2d/0/metadata.json",
+      "transcript": "/a1/9025668a2d/0/full.jsonl",
+      "content_hash": "/a1/9025668a2d/0/content_hash.txt",
+      "prompt": "/a1/9025668a2d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 5513,
+    "cache_creation_tokens": 174810,
+    "cache_read_tokens": 21176637,
+    "output_tokens": 72795,
+    "api_call_count": 181
+  }
+}
