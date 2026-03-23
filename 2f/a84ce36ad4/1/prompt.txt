@@ -1,0 +1,1 @@
+not in setup, when sync happens and then analyses, only 90 days email is analysed - what is the setup deigned as?

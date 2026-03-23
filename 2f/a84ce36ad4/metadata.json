@@ -3,7 +3,7 @@
   "checkpoint_id": "2fa84ce36ad4",
   "strategy": "manual-commit",
   "branch": "refactor/yaml-connectors",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "internal/account/auth.go"
   ],
@@ -13,13 +13,19 @@
       "transcript": "/2f/a84ce36ad4/0/full.jsonl",
       "content_hash": "/2f/a84ce36ad4/0/content_hash.txt",
       "prompt": "/2f/a84ce36ad4/0/prompt.txt"
+    },
+    {
+      "metadata": "/2f/a84ce36ad4/1/metadata.json",
+      "transcript": "/2f/a84ce36ad4/1/full.jsonl",
+      "content_hash": "/2f/a84ce36ad4/1/content_hash.txt",
+      "prompt": "/2f/a84ce36ad4/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 9,
-    "cache_creation_tokens": 20058,
-    "cache_read_tokens": 111107,
-    "output_tokens": 1313,
-    "api_call_count": 5
+    "input_tokens": 13,
+    "cache_creation_tokens": 36234,
+    "cache_read_tokens": 142750,
+    "output_tokens": 2067,
+    "api_call_count": 7
   }
 }
