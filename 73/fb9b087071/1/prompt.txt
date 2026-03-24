@@ -159,3 +159,7 @@ If those two land, this is a very credible design.
 ---
 
 build this now, without creating plan, create tasks and keep checking if everything in the spec is created and tested
+
+---
+
+yes
