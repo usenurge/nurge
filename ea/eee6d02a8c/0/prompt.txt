@@ -1,0 +1,36 @@
+implement @docs/superpowers/specs/2026-03-23-maturity-based-setup-design.md by just tasks and not by planning in superhuman
+
+---
+
+okay
+
+---
+
+after setup is completed can we auto remove the setup skill we installed?
+
+---
+
+can we make it only be read by claude code with an encryption and nobody else?
+
+---
+
+oth
+
+---
+
+no let it be
+
+---
+
+can we buld this for me to check on local
+
+---
+
+<task-notification>
+<task-id>b6dyp9sr1</task-id>
+<tool-use-id>toolu_01R9UY7R7T9n9ZzBTKJFh98s</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/e6fd1544-eeb4-4471-b058-7d02e9950258/tasks/b6dyp9sr1.output</output-file>
+<status>killed</status>
+<summary>Background command "Test what entire's session-start hook outputs" was stopped</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/e6fd1544-eeb4-4471-b058-7d02e9950258/tasks/b6dyp9sr1.output
