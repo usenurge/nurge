@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "ffc9c3b158a5",
+  "session_id": "69885a0c-01fc-4307-a48e-a0759ac5367f",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-24T04:54:11.906433Z",
+  "branch": "codex/cli-sequencer-operator-layer",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "fdafb0948e9e",
+  "token_usage": {
+    "input_tokens": 1056,
+    "cache_creation_tokens": 217032,
+    "cache_read_tokens": 32712088,
+    "output_tokens": 93241,
+    "api_call_count": 239
+  },
+  "session_metrics": {
+    "turn_count": 31
+  }
+}
