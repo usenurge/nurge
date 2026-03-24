@@ -3,21 +3,29 @@
   "checkpoint_id": "eaeee6d02a8c",
   "strategy": "manual-commit",
   "branch": "refactor/yaml-connectors",
-  "checkpoints_count": 1,
-  "files_touched": null,
+  "checkpoints_count": 2,
+  "files_touched": [
+    "docs/superpowers/specs/2026-03-24-convex-unipile-sequencer-design.md"
+  ],
   "sessions": [
     {
       "metadata": "/ea/eee6d02a8c/0/metadata.json",
       "transcript": "/ea/eee6d02a8c/0/full.jsonl",
       "content_hash": "/ea/eee6d02a8c/0/content_hash.txt",
       "prompt": "/ea/eee6d02a8c/0/prompt.txt"
+    },
+    {
+      "metadata": "/ea/eee6d02a8c/1/metadata.json",
+      "transcript": "/ea/eee6d02a8c/1/full.jsonl",
+      "content_hash": "/ea/eee6d02a8c/1/content_hash.txt",
+      "prompt": "/ea/eee6d02a8c/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 107,
-    "cache_creation_tokens": 85080,
-    "cache_read_tokens": 3919822,
-    "output_tokens": 26268,
-    "api_call_count": 55
+    "input_tokens": 373,
+    "cache_creation_tokens": 184274,
+    "cache_read_tokens": 9750041,
+    "output_tokens": 55402,
+    "api_call_count": 137
   }
 }

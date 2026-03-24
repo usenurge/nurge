@@ -1,0 +1,113 @@
+we have built a sequencer yesterday. using claude code and convex, can you help me figure out what we did?
+
+---
+
+yes need to add convex in sequencer, I will tell you why. We need to send emails and other actions even when terminals is not on, so can we use claude code's capabilities+ convex to do thi?
+
+---
+
+what do you think is best?
+
+---
+
+yes b it is
+
+---
+
+iss there a webhook where we will know realitime and sits on convex? so when the reply coes, we will top automatically instead of sending before sync
+
+---
+
+is pub sub possible via composio?
+
+---
+
+yes
+
+---
+
+composio should handle sending too
+
+---
+
+what about using something like, unipile for all management, Gmail and  Linkedin?
+
+---
+
+lets use unipile over composio
+
+---
+
+yes
+
+---
+
+but the url still will be unipile?
+
+---
+
+b lets go with
+
+---
+
+okay, and also we will have a record?
+
+---
+
+But how can Sync be used for setup , becaue, now instead of native gmail we are moving to unipile so im confused how thi will work
+
+---
+
+yes
+
+---
+
+A
+
+---
+
+In future I need to build a dashboard in app.nurge.sh, So pulling convex data from that is iimportant?
+
+---
+
+No, here i what we should do , CLI to SQL Lite to Convex? SQL Lite should always have the right structure, So is convex
+
+---
+
+yes
+
+---
+
+yes
+
+---
+
+yes
+
+---
+
+yes
+
+---
+
+yes
+
+---
+
+add linkedin work as on now but dont use, We will use it later when want?
+
+---
+
+yes works
+
+---
+
+yes
+
+---
+
+no
+
+---
+
+ye
