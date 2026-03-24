@@ -1,0 +1,25 @@
+implement @docs/superpowers/specs/2026-03-23-maturity-based-setup-design.md by just tasks and not by planning in superhuman
+
+---
+
+okay
+
+---
+
+after setup is completed can we auto remove the setup skill we installed?
+
+---
+
+can we make it only be read by claude code with an encryption and nobody else?
+
+---
+
+oth
+
+---
+
+no let it be
+
+---
+
+can we buld this for me to check on local
