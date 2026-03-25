@@ -1,0 +1,17 @@
+what unipile tokens should I give? check context7 and tell me
+
+---
+
+api35.unipile.com:16568
+
+---
+
+KoOWRDsS.qfENqW4N6Thd9Tjs4zYi+uMZ/lVT0HrxaVhfwFARN+w=
+
+---
+
+what webhooks do I need to create you can do that with access token, you have permissions
+
+---
+
+is it all set?
