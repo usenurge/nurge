@@ -1,0 +1,51 @@
+⏺ Bash(nurge send --to "daksh@greptile.com" --subject "outbound from your terminal" --body
+      "Hey Daksh,…)                                                                         
+  ⎿  Error: Exit code 1                                                                     
+     Error: send failed: No connected email account. Run: nurge connect gmail               
+     Usage:                                                                                 
+       nurge send [flags]                                     
+                                                                                            
+     Flags:                               
+           --body string           Email body (plain text)                                  
+           --campaign string       Optional campaign name stored on the sequence enrollment
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on sequence enrollment
+     … +6 lines (ctrl+o to see all)      
+
+⏺ Gmail connection seems to have dropped. Let me reconnect.
+
+⏺ Bash(nurge connect gmail)                                                                 
+  ⎿  Opening browser for Gmail...
+     ✓ Gmail connected (rejoe@nurge.app)                                                    
+                                                              
+⏺ Bash(nurge send --to "daksh@greptile.com" --subject "outbound from your terminal" --body  
+      "Hey Daksh,…)                                                                         
+  ⎿  Error: Exit code 1                                                                     
+     Error: send failed: No connected email account. Run: nurge connect gmail               
+     Usage:                                                                                 
+       nurge send [flags]                                                                   
+                                                                                            
+     Flags:                               
+           --body string           Email body (plain text)                                  
+           --campaign string       Optional campaign name stored on the sequence enrollment 
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on sequence enrollment
+     … +6 lines (ctrl+o to see all)      
+
+⏺ Bash(nurge connectors)                                      
+  ⎿    ✓ Gmail      rejoe@nurge.app
+                                                                                            
+⏺ Bash(nurge send --to "daksh@greptile.com" --subject "outbound from your terminal" --body
+      "Hey Daksh,\n\nYou're raising a Series A and scaling Greptile's GTM — which…)         
+  ⎿  Error: Exit code 1                                                                     
+     Error: send failed: No connected email account. Run: nurge connect gmail
+     Usage:                                                                                 
+       nurge send [flags]                                     
+                                                                                            
+     Flags:                               
+           --body string           Email body (plain text)                                  
+           --campaign string       Optional campaign name stored on the sequence enrollment
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on sequence enrollment
+     … +6 lines (ctrl+o to see all)      
+  ⎿  Interrupted · What should Claude do instead?
