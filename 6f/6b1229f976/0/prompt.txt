@@ -1,0 +1,29 @@
+now does nurge auto update oin the next session once a new update is available?
+
+---
+
+build auto update
+
+---
+
+C
+
+---
+
+C. we do multiple updates a day
+
+---
+
+A
+
+---
+
+so if we build better way of adding skills in new update and the previou users already built their skillsm, how do they work?
+
+---
+
+B
+
+---
+
+implement directly
