@@ -1,0 +1,1 @@
+Since the go binaries are executing in bash - is the context window getting populated with too much tokens? /Users/rejoesudarsan/Projects/nurgeoutbound is my setup after running nurge
