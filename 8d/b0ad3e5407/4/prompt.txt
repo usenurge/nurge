@@ -1,0 +1,61 @@
+use context7 to help me integrate unipile
+
+---
+
+/Users/rejoesudarsan/Downloads/REDACTED.apps.googleusercontent.com.json this is my google credentials
+
+---
+
+1 and 2
+
+---
+
+2, for 1 , we have to use uniple key right?
+
+---
+
+if I create two separate auth's then can we track user signups and outreach domains seprately?
+
+---
+
+we dont want user sign ups in unipile
+
+---
+
+/Users/rejoesudarsan/Downloads/REDACTED.apps.googleusercontent.com.json for dekstop auth
+
+---
+
+what about unipile?
+
+---
+
+but the token will also be store in local for check?
+
+---
+
+okay
+
+---
+
+can you check and tell me
+
+---
+
+A
+
+---
+
+yes
+
+---
+
+yes
+
+---
+
+okay
+
+---
+
+no implement directly by creating tasks
