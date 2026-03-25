@@ -100,7 +100,8 @@ if command -v nurge &>/dev/null; then
     success "nurge installed successfully!"
     echo ""
     info "Get started:"
-    echo "  nurge init"
+    echo "  nurge my-outbound"
+    echo "  cd my-outbound"
 else
     error "Installation completed but 'nurge' not found in PATH. Add $INSTALL_DIR to your PATH."
 fi
