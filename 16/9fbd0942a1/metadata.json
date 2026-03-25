@@ -3,13 +3,14 @@
   "checkpoint_id": "169fbd0942a1",
   "strategy": "manual-commit",
   "branch": "codex/cli-sequencer-operator-layer",
-  "checkpoints_count": 5,
+  "checkpoints_count": 16,
   "files_touched": [
     "README.md",
     "cmd/hook.go",
     "cmd/memory.go",
     "cmd/send.go",
     "cmd/skills.go",
+    "docs/WHATS-BUILT.md",
     "docs/skills.md",
     "docs/superpowers/feedback.md",
     "internal/db/db.go",
@@ -26,6 +27,7 @@
     "internal/project/skills/setup/skill-generation.md",
     "internal/project/step_hooks.go",
     "internal/project/step_skill.go",
+    "internal/sequence/sequence.go",
     "internal/session/learning.go",
     "internal/session/strategic_memory.go",
     "internal/session/strategic_memory_test.go",
@@ -51,13 +53,19 @@
       "transcript": "/16/9fbd0942a1/2/full.jsonl",
       "content_hash": "/16/9fbd0942a1/2/content_hash.txt",
       "prompt": "/16/9fbd0942a1/2/prompt.txt"
+    },
+    {
+      "metadata": "/16/9fbd0942a1/3/metadata.json",
+      "transcript": "/16/9fbd0942a1/3/full.jsonl",
+      "content_hash": "/16/9fbd0942a1/3/content_hash.txt",
+      "prompt": "/16/9fbd0942a1/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 15033,
-    "cache_creation_tokens": 271936,
-    "cache_read_tokens": 16425179,
-    "output_tokens": 61813,
-    "api_call_count": 173
+    "input_tokens": 24979,
+    "cache_creation_tokens": 369935,
+    "cache_read_tokens": 19921978,
+    "output_tokens": 93157,
+    "api_call_count": 219
   }
 }

@@ -1,0 +1,41 @@
+is thi system a full fledged outbound system?
+
+---
+
+deliverability infrastructure (warmup, inbox rotation, sending limits) check this
+
+---
+
+okay , then give me a report of what is available in this
+
+---
+
+write these two in a whatsbuilt doc
+
+---
+
+i thout convex outbound system was built
+
+---
+
+read on a ralphs loop on what is built. Dont read docs or any other foledr and then help me figure out what is actually build every action it does and how can this be utlised?
+
+---
+
+can you make this as doc?
+
+---
+
+so from what's build, what is the actual state rom what you responded earlier
+
+---
+
+Now block users form using more than 2 email? would that be enough data for us to understand stuffs?
+
+---
+
+yes, for current MVP let this be only 2
+
+---
+
+release this as 1.2

@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "169fbd0942a1",
+  "session_id": "40cacfc8-a8a6-4d81-bae4-80060059fcb8",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-25T06:34:17.644031Z",
+  "branch": "codex/cli-sequencer-operator-layer",
+  "checkpoints_count": 11,
+  "files_touched": [
+    "README.md",
+    "cmd/hook.go",
+    "cmd/send.go",
+    "cmd/skills.go",
+    "docs/WHATS-BUILT.md",
+    "docs/skills.md",
+    "docs/superpowers/feedback.md",
+    "internal/db/db.go",
+    "internal/email/send.go",
+    "internal/email/sync.go",
+    "internal/email/sync_test.go",
+    "internal/project/config.go",
+    "internal/project/step_hooks.go",
+    "internal/project/step_skill.go",
+    "internal/sequence/sequence.go",
+    "internal/session/learning.go",
+    "internal/sync/sync.go"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "3f135d595ee7",
+  "token_usage": {
+    "input_tokens": 9946,
+    "cache_creation_tokens": 97999,
+    "cache_read_tokens": 3496799,
+    "output_tokens": 31344,
+    "api_call_count": 46
+  },
+  "session_metrics": {
+    "turn_count": 11
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-25T06:34:16.647984Z",
+    "agent_lines": 4073,
+    "human_added": 9613,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 13686,
+    "agent_percentage": 29.760339032588046
+  }
+}
