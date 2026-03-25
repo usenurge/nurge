@@ -3,15 +3,22 @@
   "checkpoint_id": "169fbd0942a1",
   "strategy": "manual-commit",
   "branch": "codex/cli-sequencer-operator-layer",
-  "checkpoints_count": 16,
+  "checkpoints_count": 19,
   "files_touched": [
     "README.md",
     "cmd/hook.go",
     "cmd/memory.go",
     "cmd/send.go",
     "cmd/skills.go",
+    "docs/PRODUCT-OVERVIEW.md",
     "docs/WHATS-BUILT.md",
     "docs/skills.md",
+    "docs/skills/README.md",
+    "docs/skills/config-reference.md",
+    "docs/skills/how-skills-are-created.md",
+    "docs/skills/maturity-levels.md",
+    "docs/skills/skill-catalog.md",
+    "docs/skills/versioning-and-learning.md",
     "docs/superpowers/feedback.md",
     "internal/db/db.go",
     "internal/email/send.go",
@@ -31,6 +38,8 @@
     "internal/session/learning.go",
     "internal/session/strategic_memory.go",
     "internal/session/strategic_memory_test.go",
+    "internal/sync/session_summary.go",
+    "internal/sync/session_summary_test.go",
     "internal/sync/strategic_memory.go",
     "internal/sync/strategic_memory_test.go",
     "internal/sync/sync.go"
@@ -59,13 +68,19 @@
       "transcript": "/16/9fbd0942a1/3/full.jsonl",
       "content_hash": "/16/9fbd0942a1/3/content_hash.txt",
       "prompt": "/16/9fbd0942a1/3/prompt.txt"
+    },
+    {
+      "metadata": "/16/9fbd0942a1/4/metadata.json",
+      "transcript": "/16/9fbd0942a1/4/full.jsonl",
+      "content_hash": "/16/9fbd0942a1/4/content_hash.txt",
+      "prompt": "/16/9fbd0942a1/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 24979,
-    "cache_creation_tokens": 369935,
-    "cache_read_tokens": 19921978,
-    "output_tokens": 93157,
-    "api_call_count": 219
+    "input_tokens": 33022,
+    "cache_creation_tokens": 467937,
+    "cache_read_tokens": 21160869,
+    "output_tokens": 118880,
+    "api_call_count": 237
   }
 }

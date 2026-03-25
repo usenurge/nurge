@@ -1,0 +1,9 @@
+deploy multiple agents, and read through the entire code and tell me what is made, The user flow, tech and what it is used for and how the product is built, How the user can use, all as a properly strucutred doc with no code snippets but as palin english, can we do this? - dont read spec and plans, oncly the code, first create a structure for outpur and reverse enggineer how we will get all details
+
+---
+
+move this to a folder
+
+---
+
+write details of all skills we create and how we create in a folder skills in docs and details of it

@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "169fbd0942a1",
+  "session_id": "4c9f5b48-cfdc-4444-95c3-96292a694dc3",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-25T06:34:18.5276Z",
+  "branch": "codex/cli-sequencer-operator-layer",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "README.md",
+    "cmd/hook.go",
+    "cmd/send.go",
+    "docs/PRODUCT-OVERVIEW.md",
+    "docs/skills.md",
+    "docs/skills/README.md",
+    "docs/skills/config-reference.md",
+    "docs/skills/how-skills-are-created.md",
+    "docs/skills/maturity-levels.md",
+    "docs/skills/skill-catalog.md",
+    "docs/skills/versioning-and-learning.md",
+    "docs/superpowers/feedback.md",
+    "internal/email/send.go",
+    "internal/email/sync.go",
+    "internal/email/sync_test.go",
+    "internal/project/config.go",
+    "internal/project/step_hooks.go",
+    "internal/project/step_skill.go",
+    "internal/sync/session_summary.go",
+    "internal/sync/session_summary_test.go",
+    "internal/sync/sync.go"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "d580e4d6578e",
+  "token_usage": {
+    "input_tokens": 8043,
+    "cache_creation_tokens": 98002,
+    "cache_read_tokens": 1238891,
+    "output_tokens": 25723,
+    "api_call_count": 18
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-25T06:34:17.696891Z",
+    "agent_lines": 2842,
+    "human_added": 10814,
+    "human_modified": 15,
+    "human_removed": 0,
+    "total_committed": 13671,
+    "agent_percentage": 20.78853046594982
+  }
+}
