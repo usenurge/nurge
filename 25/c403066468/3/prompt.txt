@@ -1,0 +1,61 @@
+my biggest problem is since we are using claude's native search and web fetch and that is not optimised a lot of my context gets flooded and started hiting limits quite faster. Can we research and think about ways to optimise this?
+
+---
+
+Setup/ entire one doesnt get event completed
+
+---
+
+alo think this is a systemic problem and want to make it more determinitic
+
+---
+
+but the problem is we are using claude's native qualities of web search, fetch and other tools for this, I guess using this is also hitting ourr limit
+
+---
+
+can you research and tell me if claude have limitis on tools calls?
+
+---
+
+but then still the context exhaution is not solved na, eventutally it will be same ?
+
+---
+
+but dont we have to build same tools and it require paying for API's now?
+
+---
+
+okay build this and change- and do and eg fet for both using a same search and tell the token cost
+
+---
+
+wont template skill generation take my uniqueness away?
+
+---
+
+it alrady does that?
+
+---
+
+hoe would you solve it from this context?
+
+---
+
+okay and what abour skills? How it is not gonna drink tokens
+
+---
+
+okay do both of this and test
+
+---
+
+continue with this as of now
+
+---
+
+can we also add how many token per prompt, tool fetch and every activities in the most atomic unit consumes so that we can keep improving them, this is kind of an obervability layer?
+
+---
+
+this is for me, I want copy of thi data in convex so I can figure out token optimisation once my users start using

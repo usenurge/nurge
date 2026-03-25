@@ -3,7 +3,7 @@
   "checkpoint_id": "25c403066468",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 6,
   "files_touched": [
     ".gitignore",
     "cmd/emails.go",
@@ -43,13 +43,19 @@
       "transcript": "/25/c403066468/2/full.jsonl",
       "content_hash": "/25/c403066468/2/content_hash.txt",
       "prompt": "/25/c403066468/2/prompt.txt"
+    },
+    {
+      "metadata": "/25/c403066468/3/metadata.json",
+      "transcript": "/25/c403066468/3/full.jsonl",
+      "content_hash": "/25/c403066468/3/content_hash.txt",
+      "prompt": "/25/c403066468/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 29,
-    "cache_creation_tokens": 53301,
-    "cache_read_tokens": 500061,
-    "output_tokens": 5016,
-    "api_call_count": 17
+    "input_tokens": 234,
+    "cache_creation_tokens": 218503,
+    "cache_read_tokens": 14568881,
+    "output_tokens": 58425,
+    "api_call_count": 145
   }
 }
