@@ -1,0 +1,62 @@
+unipile have been integrated, But I want to know how to set it up, I think api keys and other stuffs are missing.
+
+---
+
+but first email, how does it go?
+
+---
+
+this wont work because I dont have send permissions for direct, It come from Unipile
+
+---
+
+yes
+
+---
+
+2
+
+---
+
+what do  you think is the best thing?
+
+---
+
+what is the difference?
+
+---
+
+okay go with your recommenation
+
+---
+
+okay go with C
+
+---
+
+okay
+
+---
+
+Actually, that last case is interesting. If a user/skill explicitly runs nurge send --task-id X, they're
+   manually triggering a follow-up. Should that be sync too? explain
+
+---
+
+okay
+
+---
+
+okay
+
+---
+
+okay
+
+---
+
+no implemnt directly
+
+---
+
+okay cool
