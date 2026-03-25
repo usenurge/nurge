@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "8db0ad3e5407",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "cmd/send.go",
+    "convex/_generated/api.d.ts",
+    "convex/auth.ts",
+    "convex/http.ts",
+    "convex/schema.ts",
+    "convex/send.ts",
+    "convex/sendApi.ts",
+    "internal/account/auth.go",
+    "internal/account/convex.go",
+    "internal/account/google.go",
+    "internal/account/google_credentials.json",
+    "internal/account/token.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8d/b0ad3e5407/0/metadata.json",
+      "transcript": "/8d/b0ad3e5407/0/full.jsonl",
+      "content_hash": "/8d/b0ad3e5407/0/content_hash.txt",
+      "prompt": "/8d/b0ad3e5407/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 17541,
+    "cache_read_tokens": 34086,
+    "output_tokens": 634,
+    "api_call_count": 2
+  }
+}
