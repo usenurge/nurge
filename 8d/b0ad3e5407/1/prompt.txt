@@ -1,0 +1,1 @@
+should I ever think of making nurge its own CLI rather than depending on claude code?
