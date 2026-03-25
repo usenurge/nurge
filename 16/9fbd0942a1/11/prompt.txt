@@ -1,0 +1,17 @@
+I have a problem, Can you solve it for me? My research i loading too much tokens and setup is floodign with tokens that my claude code liits are affected
+
+---
+
+i think we are flooding context with too many skills. are we?
+
+---
+
+not this repo, whatever skills we load.
+
+---
+
+/Users/rejoesudarsan/Projects/nurgeoutbound check this repo
+
+---
+
+so global plugins, are they being used everywhere? I dont have aproblmen with them in thi repo where I coding.
