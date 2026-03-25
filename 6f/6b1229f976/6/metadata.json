@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "6f6b1229f976",
+  "session_id": "b88b7660-7c39-483f-aa9c-9dcd2323c082",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-25T17:21:39.777123Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "cmd/connect.go",
+    "cmd/root.go",
+    "cmd/skills.go",
+    "cmd/sync.go",
+    "convex/_generated/api.d.ts",
+    "convex/connect.ts",
+    "convex/http.ts",
+    "convex/unipile.ts",
+    "convex/webhook.ts",
+    "internal/account/convex.go",
+    "internal/email/sync.go"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "a41c3311a723",
+  "token_usage": {
+    "input_tokens": 11,
+    "cache_creation_tokens": 44171,
+    "cache_read_tokens": 348265,
+    "output_tokens": 3671,
+    "api_call_count": 9
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-25T17:21:39.687649Z",
+    "agent_lines": 545,
+    "human_added": 1429,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1974,
+    "agent_percentage": 27.608915906788244
+  }
+}

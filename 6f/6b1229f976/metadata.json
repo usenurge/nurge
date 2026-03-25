@@ -3,7 +3,7 @@
   "checkpoint_id": "6f6b1229f976",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 33,
+  "checkpoints_count": 34,
   "files_touched": [
     "CLAUDE.md",
     "cmd/connect.go",
@@ -60,13 +60,19 @@
       "transcript": "/6f/6b1229f976/5/full.jsonl",
       "content_hash": "/6f/6b1229f976/5/content_hash.txt",
       "prompt": "/6f/6b1229f976/5/prompt.txt"
+    },
+    {
+      "metadata": "/6f/6b1229f976/6/metadata.json",
+      "transcript": "/6f/6b1229f976/6/full.jsonl",
+      "content_hash": "/6f/6b1229f976/6/content_hash.txt",
+      "prompt": "/6f/6b1229f976/6/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 7202,
-    "cache_creation_tokens": 666057,
-    "cache_read_tokens": 22737080,
-    "output_tokens": 99372,
-    "api_call_count": 237
+    "input_tokens": 7213,
+    "cache_creation_tokens": 710228,
+    "cache_read_tokens": 23085345,
+    "output_tokens": 103043,
+    "api_call_count": 246
   }
 }
