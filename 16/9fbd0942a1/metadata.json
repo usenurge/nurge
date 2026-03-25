@@ -3,12 +3,14 @@
   "checkpoint_id": "169fbd0942a1",
   "strategy": "manual-commit",
   "branch": "codex/cli-sequencer-operator-layer",
-  "checkpoints_count": 19,
+  "checkpoints_count": 21,
   "files_touched": [
     "README.md",
+    "cmd/campaigns.go",
     "cmd/hook.go",
     "cmd/memory.go",
     "cmd/send.go",
+    "cmd/sends.go",
     "cmd/skills.go",
     "docs/PRODUCT-OVERVIEW.md",
     "docs/WHATS-BUILT.md",
@@ -34,7 +36,14 @@
     "internal/project/skills/setup/skill-generation.md",
     "internal/project/step_hooks.go",
     "internal/project/step_skill.go",
+    "internal/sequence/campaigns.go",
+    "internal/sequence/health.go",
+    "internal/sequence/leads_import.go",
+    "internal/sequence/operator_test.go",
+    "internal/sequence/reply_queue.go",
+    "internal/sequence/sends.go",
     "internal/sequence/sequence.go",
+    "internal/sequence/templates_store.go",
     "internal/session/learning.go",
     "internal/session/strategic_memory.go",
     "internal/session/strategic_memory_test.go",
@@ -74,13 +83,19 @@
       "transcript": "/16/9fbd0942a1/4/full.jsonl",
       "content_hash": "/16/9fbd0942a1/4/content_hash.txt",
       "prompt": "/16/9fbd0942a1/4/prompt.txt"
+    },
+    {
+      "metadata": "/16/9fbd0942a1/5/metadata.json",
+      "transcript": "/16/9fbd0942a1/5/full.jsonl",
+      "content_hash": "/16/9fbd0942a1/5/content_hash.txt",
+      "prompt": "/16/9fbd0942a1/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 33022,
-    "cache_creation_tokens": 467937,
-    "cache_read_tokens": 21160869,
-    "output_tokens": 118880,
-    "api_call_count": 237
+    "input_tokens": 34079,
+    "cache_creation_tokens": 685370,
+    "cache_read_tokens": 54092554,
+    "output_tokens": 212772,
+    "api_call_count": 477
   }
 }
