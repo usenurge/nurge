@@ -3,7 +3,7 @@
   "checkpoint_id": "169fbd0942a1",
   "strategy": "manual-commit",
   "branch": "codex/cli-sequencer-operator-layer",
-  "checkpoints_count": 32,
+  "checkpoints_count": 45,
   "files_touched": [
     "README.md",
     "cmd/campaigns.go",
@@ -107,13 +107,19 @@
       "transcript": "/16/9fbd0942a1/8/full.jsonl",
       "content_hash": "/16/9fbd0942a1/8/content_hash.txt",
       "prompt": "/16/9fbd0942a1/8/prompt.txt"
+    },
+    {
+      "metadata": "/16/9fbd0942a1/9/metadata.json",
+      "transcript": "/16/9fbd0942a1/9/full.jsonl",
+      "content_hash": "/16/9fbd0942a1/9/content_hash.txt",
+      "prompt": "/16/9fbd0942a1/9/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 34120,
-    "cache_creation_tokens": 760957,
-    "cache_read_tokens": 54646998,
-    "output_tokens": 222442,
-    "api_call_count": 496
+    "input_tokens": 34174,
+    "cache_creation_tokens": 833383,
+    "cache_read_tokens": 55559979,
+    "output_tokens": 230979,
+    "api_call_count": 521
   }
 }

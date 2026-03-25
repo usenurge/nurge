@@ -1,0 +1,64 @@
+https://github.com/supermemoryai/supermemory read everything about supermemoery and tell me how they do it, what can we learn for out memory and context management?
+
+---
+
+how can this be built for nurge?
+
+---
+
+save it as memory feedback file
+
+---
+
+e
+
+---
+
+but most people closes, terminal so how will this work?
+
+---
+
+will this exhaust tokens faster?
+
+---
+
+yes for now
+
+---
+
+c
+
+---
+
+c
+
+---
+
+A/ what do you think? But people won't run nurge sooner?
+
+---
+
+Nurge is an one time command?
+
+---
+
+You're right — if someone installed Nurge, ran setup, and doesn't open it again for weeks, they won't get the migration until
+  they do.                                                                                                                         
+                                                                                        
+  But that's actually fine here because:                                                                                           
+                                                                                        
+  1. The migration only matters when they use Nurge — if they're not running it, they don't need the new memory system yet         
+  2. Nurge already has a migration system in internal/db/db.go that runs on every DB open — so the moment they run any nurge
+  command, they get the migration                                                                                                  
+  3. It's idempotent — running it twice does nothing, which matches your existing init philosophy                                  
+                                                                                                                                   
+  The real risk would be if the new code breaks reading old tables before migration. So the migration just needs to run before any 
+  new memory code touches the DB — which it will, since migrations run at DB open time.                                            
+                                                                                                                                   
+  Go with A. It's consistent with how Nurge already works.                              
+                                                                                                                                   
+  Now I have enough to propose approaches. Let me put together the options.?
+
+---
+
+yes
