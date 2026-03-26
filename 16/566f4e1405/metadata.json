@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "16566f4e1405",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "internal/resolve/resolve.go",
+    "internal/resolve/resolve_test.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/16/566f4e1405/0/metadata.json",
+      "transcript": "/16/566f4e1405/0/full.jsonl",
+      "content_hash": "/16/566f4e1405/0/content_hash.txt",
+      "prompt": "/16/566f4e1405/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 51,
+    "cache_creation_tokens": 41888,
+    "cache_read_tokens": 1221683,
+    "output_tokens": 10259,
+    "api_call_count": 35
+  }
+}
