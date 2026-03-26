@@ -3,7 +3,7 @@
   "checkpoint_id": "e8b6a5db92b4",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "internal/connector/health.go",
     "internal/connector/health_test.go"
@@ -32,13 +32,19 @@
       "transcript": "/e8/b6a5db92b4/3/full.jsonl",
       "content_hash": "/e8/b6a5db92b4/3/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/e8/b6a5db92b4/4/metadata.json",
+      "transcript": "/e8/b6a5db92b4/4/full.jsonl",
+      "content_hash": "/e8/b6a5db92b4/4/content_hash.txt",
+      "prompt": "/e8/b6a5db92b4/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1660,
-    "cache_creation_tokens": 169470,
-    "cache_read_tokens": 2877997,
-    "output_tokens": 28290,
-    "api_call_count": 48
+    "input_tokens": 13757,
+    "cache_creation_tokens": 320862,
+    "cache_read_tokens": 11740941,
+    "output_tokens": 79792,
+    "api_call_count": 131
   }
 }
