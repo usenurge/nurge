@@ -1,0 +1,31 @@
+also the orgnisation of cmd and the entire codebase - check and tell me how can we do that?
+
+---
+
+split all files that are big what is the normal go per file best practie?
+
+---
+
+Later (when it starts hurting more):
+  - Group cmd/ files with prefixes or subdirectories                                                                          
+  - Restructure session/ vs sync/ boundary     do thsi right away
+
+---
+
+contnue- ignore previous message
+
+---
+
+can you structure the go folder better?
+
+---
+
+cmd folder
+
+---
+
+there are more do files in cmd like that
+
+---
+
+check if the wiring passes and all functionalities work?
