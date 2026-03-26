@@ -1,0 +1,25 @@
+from process.md and sticking to our of conetxt assembly - how can setup be changed?
+
+---
+
+create a setup example?
+
+---
+
+redesign according to process.md and build the new process and cleant he previous one - only keep the idea of context assembly
+
+---
+
+the setup flow doesnt have CRM connection
+
+---
+
+add CRM here if available
+
+---
+
+and then what is phase 2?
+
+---
+
+all amturity levels are here? what about social proof competitor stuffs and all?
