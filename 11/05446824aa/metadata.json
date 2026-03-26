@@ -3,7 +3,7 @@
   "checkpoint_id": "1105446824aa",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "cmd/conn/connect.go"
   ],
@@ -25,13 +25,19 @@
       "transcript": "/11/05446824aa/2/full.jsonl",
       "content_hash": "/11/05446824aa/2/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/11/05446824aa/3/metadata.json",
+      "transcript": "/11/05446824aa/3/full.jsonl",
+      "content_hash": "/11/05446824aa/3/content_hash.txt",
+      "prompt": "/11/05446824aa/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1647,
-    "cache_creation_tokens": 121993,
-    "cache_read_tokens": 2889580,
-    "output_tokens": 37994,
-    "api_call_count": 40
+    "input_tokens": 13792,
+    "cache_creation_tokens": 305321,
+    "cache_read_tokens": 20487044,
+    "output_tokens": 100739,
+    "api_call_count": 171
   }
 }
