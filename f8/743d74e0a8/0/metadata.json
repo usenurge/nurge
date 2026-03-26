@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "f8743d74e0a8",
+  "session_id": "6a5e70aa-9c92-4f67-b6ef-f82bdbcd27aa",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-26T07:44:36.497802Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "internal/enrich/waterfall_test.go",
+    "internal/enrich/enrich_test.go",
+    "internal/enrich/providers/apify-linkedin-company.yaml",
+    "internal/enrich/providers/apify-linkedin-person.yaml",
+    "internal/enrich/waterfall.go",
+    "internal/enrich/embed.go",
+    "internal/enrich/provider.go",
+    "internal/enrich/provider_test.go",
+    "internal/enrich/providers/apollo-email.yaml"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "dd545a21371e",
+  "checkpoint_transcript_start": 22,
+  "transcript_lines_at_start": 22,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-26T07:44:36.473146Z",
+    "agent_lines": 65,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 65,
+    "agent_percentage": 100
+  }
+}
