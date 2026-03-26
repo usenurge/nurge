@@ -25,6 +25,12 @@
       "transcript": "/3d/cfe8735a28/2/full.jsonl",
       "content_hash": "/3d/cfe8735a28/2/content_hash.txt",
       "prompt": "/3d/cfe8735a28/2/prompt.txt"
+    },
+    {
+      "metadata": "/3d/cfe8735a28/3/metadata.json",
+      "transcript": "/3d/cfe8735a28/3/full.jsonl",
+      "content_hash": "/3d/cfe8735a28/3/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
