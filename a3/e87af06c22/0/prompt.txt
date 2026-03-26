@@ -1,0 +1,13 @@
+s is done?
+
+---
+
+curl -fsSL https://install.nurge.sh | bash
+→ Downloading nurge → Fetching latest release...
+v0.1.5 (darwin/arm64)...
+curl: (3) bad range in URL position 55:
+https://github.com/usenurge/nurge/releases/download/→ Fetching latest release...
+v0.1.5/nurge_darwin_arm64.tar.gz
+                                                      ^
+✗ Download failed. Check that → Fetching latest release...
+v0.1.5 exists at https://github.com/usenurge/nurge/releases
