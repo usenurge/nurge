@@ -13,9 +13,9 @@ BINARY="nurge"
 
 # --- Helpers ---
 
-info()  { printf "\033[1;34m→\033[0m %s\n" "$1"; }
-ok()    { printf "\033[1;32m✓\033[0m %s\n" "$1"; }
-warn()  { printf "\033[1;33m!\033[0m %s\n" "$1"; }
+info()  { printf "\033[1;34m→\033[0m %s\n" "$1" >&2; }
+ok()    { printf "\033[1;32m✓\033[0m %s\n" "$1" >&2; }
+warn()  { printf "\033[1;33m!\033[0m %s\n" "$1" >&2; }
 fail()  { printf "\033[1;31m✗\033[0m %s\n" "$1" >&2; exit 1; }
 
 # --- Detect platform ---
