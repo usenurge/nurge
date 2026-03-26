@@ -3,7 +3,7 @@
   "checkpoint_id": "fbce223389f8",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "internal/enrich/freeapis.go"
   ],
@@ -19,13 +19,19 @@
       "transcript": "/fb/ce223389f8/1/full.jsonl",
       "content_hash": "/fb/ce223389f8/1/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/fb/ce223389f8/2/metadata.json",
+      "transcript": "/fb/ce223389f8/2/full.jsonl",
+      "content_hash": "/fb/ce223389f8/2/content_hash.txt",
+      "prompt": "/fb/ce223389f8/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 0,
-    "cache_creation_tokens": 0,
-    "cache_read_tokens": 0,
-    "output_tokens": 0,
-    "api_call_count": 0
+    "input_tokens": 53,
+    "cache_creation_tokens": 50487,
+    "cache_read_tokens": 1580069,
+    "output_tokens": 13774,
+    "api_call_count": 33
   }
 }
