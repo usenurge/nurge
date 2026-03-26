@@ -1,0 +1,85 @@
+only issue now is warning for email send, how can I take care of that?
+
+---
+
+verified. Now I need to justify restricted scope, mail send, do you think I will be able to get it activated?
+
+---
+
+iff I get that can I remove unipile?, alreeady I have issues anyway
+
+---
+
+if I end 1bn emails what is my cot for Gmail API
+
+---
+
+no i have to send 20 new emails on an average a day
+
+---
+
+connect a new email
+
+---
+
+max two emails
+
+---
+
+if this i so, why do we need unipile?
+
+---
+
+why do people ue unipile?
+
+---
+
+so I just need to get get my app verified right?
+
+---
+
+how to add these in google conole
+
+---
+
+[Image #4]
+
+---
+
+jutification
+
+---
+
+Do we have to write in detail of this is enough? can you do a reseasrch and tell me?
+
+---
+
+why do we nead readonly?
+
+---
+
+but we already syncd - do a new research- this is stale research
+
+---
+
+but how will we read the data? before send we synced all data without unipile too, how did we do that?
+
+---
+
+that's because I synced my own token?
+
+---
+
+how can this be used for everyone?
+
+---
+
+i i get verified for send how will it work?
+
+---
+
+but we can ync data?
+
+---
+
+read is required?
