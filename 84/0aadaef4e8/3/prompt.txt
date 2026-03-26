@@ -1,0 +1,49 @@
+from process.md. What can be the best possible way yo go with proces after setup is done
+
+---
+
+for today's top prospects? how does adding propects work here?
+
+---
+
+maybe ask during setup when do they have to ource?
+
+---
+
+what you would have done?
+
+---
+
+ok. so how does the process change?
+
+---
+
+also with the no of emails and the limit, always show in dashboard how many more lead are ourced and remind to add leads in the startup hook
+
+---
+
+ok. do you have some edge cases in mind?
+
+---
+
+20 nis new outreach and follow ups are different
+
+---
+
+solve all of it
+
+---
+
+also setup shoould end with the task
+
+---
+
+ok, iolement this. but doesnt sourcing nned to be in a loop?
+
+---
+
+ok
+
+---
+
+implement this
