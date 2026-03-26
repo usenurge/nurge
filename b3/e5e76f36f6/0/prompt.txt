@@ -1,0 +1,141 @@
+how would the outbound flow change now? I need options for upload a CSV, that need to be processed and researched and sent to outbound thread, next is earch and use Claude's native search and enrichment.
+
+---
+
+but first research an SDR's outbound process that we need to mimick
+
+---
+
+should there be only one way of writing email?
+
+---
+
+never write  emdash
+
+---
+
+explain this
+
+---
+
+everything needs to be dynamic, but right now, we have two tasks at hand, 1. make sure the skill structure is atomic that we can change any one of them with the listening pipeline
+
+---
+
+is there claude plugin come to work?
+
+---
+
+i need to understand a bit more n detail
+
+---
+
+yes but research on smarter ways to svieve this
+
+---
+
+so does this also mean ours skills dont give away what we do?
+
+---
+
+so this is an rewrite, where it also affects setup?
+
+---
+
+can you do this? this is interesting
+
+---
+
+give me details about this
+
+---
+
+which of these makes the process faster?
+
+---
+
+and what about token efficeincy?
+
+---
+
+and what about IP safety?
+
+---
+
+combined? what is the best startegy?
+
+---
+
+so here is my understanding, john@acme.com needs to be pre enriched? how would the enrichment of research workks?
+
+---
+
+there are two diferent flows, one, where the user uploads a single email, then the user uploads a csv.
+
+Also maybe when the user uploads a linkedin link or a website, this flow is non uniform now,
+
+---
+
+also cumilatively, what needs to work?
+
+---
+
+linkedin url maybe of a person or a company?
+
+---
+
+if I use something like apify how much of this can be easy?
+
+---
+
+i also saw claude doing webserch to find an email. 
+
+For example akshay hangloo's current email - can you search and find out https://www.linkedin.com/in/akshayhangloo/
+
+---
+
+thats the problem, akshay currently works at wingify
+
+---
+
+but thats not oublic
+
+---
+
+Akshay's data is available nowhere,
+
+---
+
+https://www.linkedin.com/in/arjundutta/ thi one?
+
+---
+
+now this will make the process faster
+
+---
+
+now this will make the process slower
+
+---
+
+how difficult it is to build a never bounce?
+
+---
+
+just like we do dig for SPF, and others can you help me with something here?
+
+---
+
+could be, But lets first get back to the original problme, this we will add later, add this thing in feedback.md. just this pasrt
+
+---
+
+yes build tasks for this and start builing
+
+---
+
+complete the entire thing tet and build and tell me
+
+---
+
+what was deletd?
