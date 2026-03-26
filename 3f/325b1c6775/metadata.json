@@ -4,7 +4,10 @@
   "strategy": "manual-commit",
   "branch": "main",
   "checkpoints_count": 2,
-  "files_touched": null,
+  "files_touched": [
+    "internal/connector/oauth.go",
+    "internal/connector/oauth_test.go"
+  ],
   "sessions": [
     {
       "metadata": "/3f/325b1c6775/0/metadata.json",
@@ -17,6 +20,12 @@
       "transcript": "/3f/325b1c6775/1/full.jsonl",
       "content_hash": "/3f/325b1c6775/1/content_hash.txt",
       "prompt": "/3f/325b1c6775/1/prompt.txt"
+    },
+    {
+      "metadata": "/3f/325b1c6775/2/metadata.json",
+      "transcript": "/3f/325b1c6775/2/full.jsonl",
+      "content_hash": "/3f/325b1c6775/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
