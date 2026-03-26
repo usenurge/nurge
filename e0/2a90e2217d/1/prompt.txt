@@ -1,0 +1,5 @@
+how to setup signal repo here?
+
+---
+
+read setup n @docs/process.md you wll understand
