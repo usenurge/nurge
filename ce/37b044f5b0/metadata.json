@@ -3,7 +3,7 @@
   "checkpoint_id": "ce37b044f5b0",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "internal/assembly/assembler.go",
     "internal/assembly/templates.go",
@@ -21,13 +21,19 @@
       "transcript": "/ce/37b044f5b0/1/full.jsonl",
       "content_hash": "/ce/37b044f5b0/1/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/ce/37b044f5b0/2/metadata.json",
+      "transcript": "/ce/37b044f5b0/2/full.jsonl",
+      "content_hash": "/ce/37b044f5b0/2/content_hash.txt",
+      "prompt": "/ce/37b044f5b0/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 0,
-    "cache_creation_tokens": 0,
-    "cache_read_tokens": 0,
-    "output_tokens": 0,
-    "api_call_count": 0
+    "input_tokens": 114,
+    "cache_creation_tokens": 89627,
+    "cache_read_tokens": 6515055,
+    "output_tokens": 29082,
+    "api_call_count": 94
   }
 }
