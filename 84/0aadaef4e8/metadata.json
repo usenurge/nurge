@@ -3,21 +3,29 @@
   "checkpoint_id": "840aadaef4e8",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
-  "files_touched": null,
+  "checkpoints_count": 2,
+  "files_touched": [
+    "internal/connector/oauth.go"
+  ],
   "sessions": [
     {
       "metadata": "/84/0aadaef4e8/0/metadata.json",
       "transcript": "/84/0aadaef4e8/0/full.jsonl",
       "content_hash": "/84/0aadaef4e8/0/content_hash.txt",
       "prompt": "/84/0aadaef4e8/0/prompt.txt"
+    },
+    {
+      "metadata": "/84/0aadaef4e8/1/metadata.json",
+      "transcript": "/84/0aadaef4e8/1/full.jsonl",
+      "content_hash": "/84/0aadaef4e8/1/content_hash.txt",
+      "prompt": "/84/0aadaef4e8/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1691,
-    "cache_creation_tokens": 173132,
-    "cache_read_tokens": 8845512,
-    "output_tokens": 50490,
-    "api_call_count": 82
+    "input_tokens": 1696,
+    "cache_creation_tokens": 177606,
+    "cache_read_tokens": 9030306,
+    "output_tokens": 50943,
+    "api_call_count": 85
   }
 }
