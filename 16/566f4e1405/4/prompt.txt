@@ -1,0 +1,61 @@
+show the useflow completely - dont read specs. from code
+
+---
+
+why is user auth, account auth not in install
+
+---
+
+jow does the flows, setup and outbound work?
+
+---
+
+what are the different ways in which we can run outbound?
+
+---
+
+i can input anything, say an email, an website, linkedin link or company/ person, csv upload, a search query
+
+---
+
+finding contact is still an issue?
+
+---
+
+what should be the instructions for minimum data we need to do this
+
+---
+
+but conatct email cant help us quality or write email?
+
+---
+
+yes. so when someone gives such input, we need to stop the process and tell them what needs to be done?
+
+---
+
+if someone give an email id then?
+
+---
+
+okay , what happens, when someone uploads a csv full of data? do we pick all the data we need save it and work forward? I need the local db to save all data
+
+---
+
+dedupes?
+
+---
+
+what is amrter?
+
+---
+
+ok
+
+---
+
+yes
+
+---
+
+dont use superpower, do directly
