@@ -1,107 +1,136 @@
 #!/bin/bash
 set -euo pipefail
 
+# Nurge installer
+# Usage:
+#   curl -fsSL https://install.nurge.sh | bash
+#   curl -fsSL https://install.nurge.sh | bash -s -- --pre
+#   curl -fsSL https://install.nurge.sh | bash -s -- v0.1.0
+
 REPO="usenurge/nurge"
-BINARY="nurge"
 INSTALL_DIR="/usr/local/bin"
+BINARY="nurge"
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BOLD='\033[1m'
-NC='\033[0m'
+# --- Helpers ---
 
-info() { echo -e "${BOLD}$1${NC}"; }
-success() { echo -e "${GREEN}$1${NC}"; }
-warn() { echo -e "${YELLOW}$1${NC}"; }
-error() { echo -e "${RED}Error: $1${NC}" >&2; exit 1; }
+info()  { printf "\033[1;34m→\033[0m %s\n" "$1"; }
+ok()    { printf "\033[1;32m✓\033[0m %s\n" "$1"; }
+warn()  { printf "\033[1;33m!\033[0m %s\n" "$1"; }
+fail()  { printf "\033[1;31m✗\033[0m %s\n" "$1" >&2; exit 1; }
 
-# Parse arguments
-CHANNEL="stable"
-VERSION=""
-for arg in "$@"; do
-    case "$arg" in
-        --pre|--prerelease) CHANNEL="pre" ;;
-        v*) VERSION="$arg" ;;
-        *) error "Unknown argument: $arg. Usage: install.sh [--pre] [vX.Y.Z]" ;;
-    esac
-done
+# --- Detect platform ---
 
-# Detect OS
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-case "$OS" in
-    darwin) OS="darwin" ;;
-    linux)  OS="linux" ;;
-    mingw*|msys*|cygwin*) error "Use PowerShell on Windows: irm https://raw.githubusercontent.com/$REPO/main/install.ps1 | iex" ;;
-    *) error "Unsupported OS: $OS" ;;
-esac
+detect_os() {
+  case "$(uname -s)" in
+    Linux*)  echo "linux" ;;
+    Darwin*) echo "darwin" ;;
+    *)       fail "Unsupported OS: $(uname -s)" ;;
+  esac
+}
 
-# Detect architecture
-ARCH=$(uname -m)
-case "$ARCH" in
-    x86_64|amd64)  ARCH="amd64" ;;
-    arm64|aarch64) ARCH="arm64" ;;
-    *) error "Unsupported architecture: $ARCH" ;;
-esac
+detect_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64)  echo "amd64" ;;
+    arm64|aarch64) echo "arm64" ;;
+    *)             fail "Unsupported architecture: $(uname -m)" ;;
+  esac
+}
 
-# Get version
-if [ -z "$VERSION" ]; then
-    info "Fetching latest version..."
+# --- Resolve version ---
 
-    if [ "$CHANNEL" = "stable" ]; then
-        # Only stable releases (no -alpha, -beta, -rc)
-        VERSION=$(curl -sSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/' || true)
-        if [ -z "$VERSION" ]; then
-            echo ""
-            warn "No stable release available yet."
-            echo "  To install the latest dev release:"
-            echo "  curl -fsSL https://raw.githubusercontent.com/$REPO/main/install.sh | bash -s -- --pre"
-            echo ""
-            exit 1
-        fi
-    else
-        # Latest release including pre-releases
-        VERSION=$(curl -fsSL "https://api.github.com/repos/$REPO/releases" | grep '"tag_name"' | head -1 | sed -E 's/.*"([^"]+)".*/\1/')
-        if [ -z "$VERSION" ]; then
-            error "No releases found at https://github.com/$REPO/releases"
-        fi
-        warn "Installing pre-release: $VERSION"
-    fi
-fi
+resolve_version() {
+  local requested="${1:-}"
+  local pre="${2:-false}"
 
-# Strip leading 'v' for filename
-VERSION_NUM="${VERSION#v}"
+  if [ -n "$requested" ] && [ "$requested" != "--pre" ]; then
+    echo "$requested"
+    return
+  fi
 
-FILENAME="nurge_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
-URL="https://github.com/$REPO/releases/download/$VERSION/$FILENAME"
+  info "Fetching latest release..."
+  local releases
+  releases=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=20") || fail "Failed to fetch releases"
 
-info "Installing nurge $VERSION ($OS/$ARCH)..."
+  local version=""
+  if [ "$pre" = "true" ]; then
+    version=$(echo "$releases" | grep -o '"tag_name": *"[^"]*"' | head -1 | sed 's/.*"tag_name": *"//;s/"//')
+  else
+    version=$(echo "$releases" | grep -o '"tag_name": *"[^"]*"' | grep -v 'alpha\|beta\|rc' | head -1 | sed 's/.*"tag_name": *"//;s/"//')
+  fi
 
-# Download and extract
-TMPDIR=$(mktemp -d)
-trap 'rm -rf "$TMPDIR"' EXIT
+  [ -z "$version" ] && fail "No release found"
+  echo "$version"
+}
 
-curl -fsSL "$URL" -o "$TMPDIR/$FILENAME" || error "Download failed. Check that $VERSION exists at https://github.com/$REPO/releases"
-tar -xzf "$TMPDIR/$FILENAME" -C "$TMPDIR"
+# --- Download & install ---
 
-# Install
-if [ -w "$INSTALL_DIR" ]; then
-    mv "$TMPDIR/$BINARY" "$INSTALL_DIR/$BINARY"
-else
-    info "Need sudo to install to $INSTALL_DIR"
-    sudo mv "$TMPDIR/$BINARY" "$INSTALL_DIR/$BINARY"
-fi
+install() {
+  local version="$1"
+  local os="$2"
+  local arch="$3"
 
-chmod +x "$INSTALL_DIR/$BINARY"
+  local archive_name="${BINARY}_${os}_${arch}"
+  local ext="tar.gz"
+  [ "$os" = "windows" ] && ext="zip"
 
-# Verify
-if command -v nurge &>/dev/null; then
-    success "nurge installed successfully!"
-    echo ""
-    info "Get started:"
-    echo "  nurge my-outbound"
-    echo "  cd my-outbound"
-else
-    error "Installation completed but 'nurge' not found in PATH. Add $INSTALL_DIR to your PATH."
-fi
+  local url="https://github.com/${REPO}/releases/download/${version}/${archive_name}.${ext}"
+
+  info "Downloading ${BINARY} ${version} (${os}/${arch})..."
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  trap 'rm -rf "$tmpdir"' EXIT
+
+  curl -fsSL "$url" -o "${tmpdir}/archive.${ext}" || fail "Download failed. Check that ${version} exists at https://github.com/${REPO}/releases"
+
+  info "Extracting..."
+  if [ "$ext" = "tar.gz" ]; then
+    tar -xzf "${tmpdir}/archive.${ext}" -C "$tmpdir"
+  else
+    unzip -q "${tmpdir}/archive.${ext}" -d "$tmpdir"
+  fi
+
+  # Find the binary (may be nested in a directory)
+  local bin_path
+  bin_path=$(find "$tmpdir" -name "$BINARY" -type f | head -1)
+  [ -z "$bin_path" ] && fail "Binary not found in archive"
+
+  chmod +x "$bin_path"
+
+  # Install to target directory
+  if [ -w "$INSTALL_DIR" ]; then
+    mv "$bin_path" "${INSTALL_DIR}/${BINARY}"
+  else
+    info "Need sudo to install to ${INSTALL_DIR}"
+    sudo mv "$bin_path" "${INSTALL_DIR}/${BINARY}"
+  fi
+
+  ok "Installed ${BINARY} ${version} to ${INSTALL_DIR}/${BINARY}"
+}
+
+# --- Main ---
+
+main() {
+  local arg="${1:-}"
+  local pre=false
+
+  if [ "$arg" = "--pre" ]; then
+    pre=true
+    arg=""
+  fi
+
+  local os arch version
+  os=$(detect_os)
+  arch=$(detect_arch)
+  version=$(resolve_version "$arg" "$pre")
+
+  install "$version" "$os" "$arch"
+
+  # Post-install: next steps
+  echo ""
+  echo "  Get started:"
+  echo "    nurge my-outbound"
+  echo "    cd my-outbound"
+  echo ""
+}
+
+main "$@"
