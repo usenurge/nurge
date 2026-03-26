@@ -4,7 +4,9 @@
   "strategy": "manual-commit",
   "branch": "main",
   "checkpoints_count": 1,
-  "files_touched": null,
+  "files_touched": [
+    "cmd/conn/connect.go"
+  ],
   "sessions": [
     {
       "metadata": "/36/f04520687d/0/metadata.json",
@@ -17,6 +19,12 @@
       "transcript": "/36/f04520687d/1/full.jsonl",
       "content_hash": "/36/f04520687d/1/content_hash.txt",
       "prompt": "/36/f04520687d/1/prompt.txt"
+    },
+    {
+      "metadata": "/36/f04520687d/2/metadata.json",
+      "transcript": "/36/f04520687d/2/full.jsonl",
+      "content_hash": "/36/f04520687d/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
