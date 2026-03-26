@@ -4,7 +4,10 @@
   "strategy": "manual-commit",
   "branch": "main",
   "checkpoints_count": 0,
-  "files_touched": null,
+  "files_touched": [
+    "cmd/conn/verify.go",
+    "cmd/email/sync.go"
+  ],
   "sessions": [
     {
       "metadata": "/93/1ccdc2a79f/0/metadata.json",
@@ -17,6 +20,12 @@
       "transcript": "/93/1ccdc2a79f/1/full.jsonl",
       "content_hash": "/93/1ccdc2a79f/1/content_hash.txt",
       "prompt": "/93/1ccdc2a79f/1/prompt.txt"
+    },
+    {
+      "metadata": "/93/1ccdc2a79f/2/metadata.json",
+      "transcript": "/93/1ccdc2a79f/2/full.jsonl",
+      "content_hash": "/93/1ccdc2a79f/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
