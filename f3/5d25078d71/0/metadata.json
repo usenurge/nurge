@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "f35d25078d71",
+  "session_id": "0c91436b-ab77-4903-99f1-47b6240e1fbb",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-26T11:58:53.218129Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".serena/.gitignore",
+    ".serena/project.yml"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "ae6d81d1fcfc",
+  "token_usage": {
+    "input_tokens": 20,
+    "cache_creation_tokens": 19313,
+    "cache_read_tokens": 317451,
+    "output_tokens": 1706,
+    "api_call_count": 12
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-26T11:58:53.184499Z",
+    "agent_lines": 0,
+    "human_added": 13869,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 13869,
+    "agent_percentage": 0
+  }
+}
