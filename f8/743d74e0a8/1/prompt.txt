@@ -1,0 +1,19 @@
+<task-notification>
+<task-id>b85saygv0</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/95ee7b67-7796-473e-b674-2e7da5135d5e/tasks/b85saygv0.output</output-file>
+<status>killed</status>
+<summary>Background command "Check prod logs with env var" was stopped</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/95ee7b67-7796-473e-b674-2e7da5135d5e/tasks/b85saygv0.output
+
+---
+
+<task-notification>
+<task-id>bglxu8tqm</task-id>
+<tool-use-id>toolu_011L6nhRpJ36SArsrJ355UDu</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/95ee7b67-7796-473e-b674-2e7da5135d5e/tasks/bglxu8tqm.output</output-file>
+<status>killed</status>
+<summary>Background command "Check prod Convex logs" was stopped</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/95ee7b67-7796-473e-b674-2e7da5135d5e/tasks/bglxu8tqm.output
