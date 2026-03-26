@@ -3,7 +3,7 @@
   "checkpoint_id": "697e40723bf7",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "cmd/enrich.go",
     "internal/enrich/enrich.go"
@@ -20,13 +20,19 @@
       "transcript": "/69/7e40723bf7/1/full.jsonl",
       "content_hash": "/69/7e40723bf7/1/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/69/7e40723bf7/2/metadata.json",
+      "transcript": "/69/7e40723bf7/2/full.jsonl",
+      "content_hash": "/69/7e40723bf7/2/content_hash.txt",
+      "prompt": "/69/7e40723bf7/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 0,
-    "cache_creation_tokens": 0,
-    "cache_read_tokens": 0,
-    "output_tokens": 0,
-    "api_call_count": 0
+    "input_tokens": 81,
+    "cache_creation_tokens": 66419,
+    "cache_read_tokens": 3544129,
+    "output_tokens": 20901,
+    "api_call_count": 61
   }
 }

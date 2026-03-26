@@ -1,0 +1,54 @@
+Not Built Yet
+
+  ┌───────────────────────────────────┬────────────────────────────────────────────────────────────┬──────────────────────┐
+  │             Component             │                            What                            │       Priority       │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ nurge enrich save --stdin         │ Store enrichment results in local DB (contacts +           │ High -- needed for   │
+  │                                   │ enrichment_cache tables)                                   │ caching              │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ prospect_intelligence_framework   │ Add to ValidAtomTypes in internal/assembly/knowledge.go    │ High -- setup S9     │
+  │ atom type                         │                                                            │ seeds this           │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ transformation atom type          │ Add to ValidAtomTypes                                      │ High -- setup S4     │
+  │                                   │                                                            │ seeds this           │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ signals atom type                 │ Add to ValidAtomTypes                                      │ High -- setup S5     │
+  │                                   │                                                            │ seeds this           │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ insight_priority atom type        │ Add to ValidAtomTypes                                      │ High -- setup S6     │
+  │                                   │                                                            │ seeds this           │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Convex callback: provider         │ Current callback queries Unipile API for provider -- works │                      │
+  │ detection fix                     │  but could be cleaner. Multiple duplicate LinkedIn         │ Medium -- cleanup    │
+  │                                   │ accounts created from our testing.                         │                      │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ nurge enrich search               │ For finding who left a company. Wired in CLI flags but not │ Medium -- needed for │
+  │ --past-company                    │  tested.                                                   │  team_turnover       │
+  │                                   │                                                            │ signal               │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ SEC EDGAR API                     │ Stub in freeapis.go, not implemented.                      │ Low -- only for      │
+  │                                   │                                                            │ public companies     │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │                                   │ nurge-research SKILL.md needs to use the new enrichment    │ High -- the skill    │
+  │ Research skill update             │ waterfall + framework                                      │ that actually uses   │
+  │                                   │                                                            │ all this             │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Outbound skill update             │ nurge-outbound SKILL.md needs to read framework + dossier  │ High -- the skill    │
+  │                                   │                                                            │ that writes emails   │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Spec update                       │ Spec is stale -- doesn't reflect buying committee, insight │ Medium               │
+  │                                   │  priorities, website-first flow, source registry           │                      │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Remove old Apify/Apollo providers │ internal/enrich/providers/*.yaml still reference           │ Low                  │
+  │                                   │ Apify/Apollo. Dead code.                                   │                      │
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Clean up duplicate Unipile        │ 5 LinkedIn accounts registered from testing                │ Low                  │
+  │ accounts                          │                                                            │                      │   
+  ├───────────────────────────────────┼────────────────────────────────────────────────────────────┼──────────────────────┤
+  │ Versioned build + install         │ Currently building as dev. Need cp ./nurge                 │ Before testing       │   
+  │                                   │ /usr/local/bin/nurge                                       │                      │   
+  └───────────────────────────────────┴────────────────────────────────────────────────────────────┴──────────────────────┘
+
+---
+
+create tasks and finis all of it
