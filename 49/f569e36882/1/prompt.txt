@@ -1,0 +1,9 @@
+how to setup signal repo here?
+
+---
+
+read setup n @docs/process.md you wll understand
+
+---
+
+the leads already in the system needs to be rechecked for all signals,  but this will block my linkedin/
