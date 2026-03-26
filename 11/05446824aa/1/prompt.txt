@@ -7,3 +7,7 @@ create a setup example?
 ---
 
 redesign according to process.md and build the new process and cleant he previous one - only keep the idea of context assembly
+
+---
+
+the setup flow doesnt have CRM connection
