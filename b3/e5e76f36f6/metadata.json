@@ -5,6 +5,11 @@
   "branch": "main",
   "checkpoints_count": 34,
   "files_touched": [
+    ".claude/settings.json",
+    ".claude/settings.local.json",
+    ".gitignore",
+    ".playwright-mcp/console-2026-03-25T12-20-55-369Z.log",
+    ".playwright-mcp/console-2026-03-26T04-54-15-482Z.log",
     ".serena/.gitignore",
     ".serena/project.yml",
     "cmd/connect.go",
@@ -16,9 +21,16 @@
     "cmd/resolve.go",
     "cmd/skills_install.go",
     "cmd/tier.go",
+    "convex/_generated/api.d.ts",
     "convex/connect.ts",
+    "convex/enrich.ts",
+    "convex/http.ts",
+    "convex/unipile.ts",
+    "convex/webhook.ts",
     "docs/superpowers/feedback.md",
+    "docs/superpowers/specs/2026-03-25-skill-catalog-v2-design.md",
     "docs/superpowers/specs/2026-03-26-context-assembly-architecture-design.md",
+    "docs/superpowers/specs/2026-03-26-enrichment-context-assembly-design.md",
     "internal/account/convex.go",
     "internal/assembly/assembler.go",
     "internal/assembly/assembler_test.go",
@@ -33,6 +45,7 @@
     "internal/enrich/embed.go",
     "internal/enrich/enrich.go",
     "internal/enrich/enrich_test.go",
+    "internal/enrich/freeapis.go",
     "internal/enrich/provider.go",
     "internal/enrich/provider_test.go",
     "internal/enrich/providers/apify-linkedin-company.yaml",
@@ -40,6 +53,8 @@
     "internal/enrich/providers/apollo-email.yaml",
     "internal/enrich/waterfall.go",
     "internal/enrich/waterfall_test.go",
+    "internal/project/skills/setup/SKILL.md",
+    "internal/project/skills/setup/phase-1-foundation.md",
     "internal/project/skills/setup/phase-2-experimenting.md",
     "internal/project/skills/setup/phase-2-operating.md",
     "internal/project/skills/setup/phase-2-scaling.md",
@@ -53,6 +68,8 @@
     "internal/tier/tier.go",
     "internal/tier/tier_test.go",
     "research/apify-enrichment-research.md",
+    "research/google-oauth-verification-research.md",
+    "research/nurge-product-research.md",
     "research/sdr-human-workflow-research.md"
   ],
   "sessions": [
@@ -66,6 +83,12 @@
       "metadata": "/b3/e5e76f36f6/1/metadata.json",
       "transcript": "/b3/e5e76f36f6/1/full.jsonl",
       "content_hash": "/b3/e5e76f36f6/1/content_hash.txt",
+      "prompt": ""
+    },
+    {
+      "metadata": "/b3/e5e76f36f6/2/metadata.json",
+      "transcript": "/b3/e5e76f36f6/2/full.jsonl",
+      "content_hash": "/b3/e5e76f36f6/2/content_hash.txt",
       "prompt": ""
     }
   ],
