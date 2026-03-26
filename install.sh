@@ -69,7 +69,7 @@ install() {
   local os="$2"
   local arch="$3"
 
-  local archive_name="${BINARY}_${os}_${arch}"
+  local archive_name="${BINARY}_${version#v}_${os}_${arch}"
   local ext="tar.gz"
   [ "$os" = "windows" ] && ext="zip"
 
