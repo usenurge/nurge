@@ -1,0 +1,2500 @@
+do a deep analysis of the code and find error, unwanted code and over engineering, bugs, logical pitfalls and future issues. run it multiple ties
+
+---
+
+<task-notification>
+<task-id>a2cdfb27559e5d765</task-id>
+<tool-use-id>toolu_013tm7SSaaZPB78GG5nGVXK3</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a2cdfb27559e5d765.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze cmd/ for bugs/issues" completed</summary>
+<result>Now I have reviewed all 39 Go files in the `/Users/rejoesudarsan/Projects/nurgesh/cmd/` directory. Let me compile my comprehensive code review findings:
+
+## Comprehensive Code Review Report: cmd/ Directory
+
+### 1. ERROR HANDLING ISSUES
+
+**Critical Issues:**
+
+- **disconnect.go:30** - `os.RemoveAll(tokenDir)` error is ignored. If removal fails, the command returns success but tokens aren't cleaned up. Should handle/report the error.
+
+- **sync.go:76-82** - `d.Exec()` errors are completely ignored. If the INSERT or UPDATE fails, the sync cursor isn't updated but the function still returns success. Should check error.
+
+- **hook.go:160, 194, 260, 274** - In `openSessionDB()`, errors from `session.ReadStdin()` are silently swallowed (line 244: `input, err := session.ReadStdin()` followed by `if err != nil` implicitly handling the error as `nil`). This can hide issues.
+
+- **hook.go:209-218** - Database operations in the session start flow swallow errors with `if d, err := db.Open(); err == nil` pattern, then ignore all subsequent errors from `session.CreateSession()` and `session.AddEvent()`. Should log or return errors.
+
+- **root.go:214** - `os.Pipe()` can return error (third return value ignored with `_`). Should handle this error.
+
+- **root.go:252-254** - In `Execute()`, `metrics.Log()` error is silently ignored: `_ = metrics.Log(d, ...)`. If metrics logging fails, the user doesn't know.
+
+**Moderate Issues:**
+
+- **hook.go:573, 576, 579** - In `attemptSessionStartSync()` and `attemptSessionEndPush()`, errors from sync engine methods are captured but not explicitly logged to the user.
+
+- **skills.go:240-253** - In `skillsWriteCmd`, when database isn't available (`if err == nil`), errors from `SaveSkillVersion()` are silently ignored with `_, _ = session.SaveSkillVersion()`. These write operations should fail loud if DB is broken.
+
+- **account.go:22, 31** - `json.Marshal()` errors are completely ignored in JSON output for account format. Malformed JSON could be silently sent.
+
+- **enrich.go:183, 235, 267, 271** - Multiple `json.Unmarshal()` and `json.MarshalIndent()` calls ignore errors. Invalid JSON could silently fail to parse.
+
+---
+
+### 2. RESOURCE LEAKS & FILE HANDLING
+
+- **hook.go:210-218** - Missing explicit `defer` after `d.Open()` in a single case; uses immediate close. Most other places do defer correctly, but inconsistency here.
+
+- **root.go:213-231** - Complex pipe-based stdout wrapping. The goroutine reading from the pipe (line 219-231) could panic or deadlock if the pipe write side closes unexpectedly. No timeout or deadlock detection.
+
+- **connect.go:66, 120** - `time.Ticker` is created but only deferred stop in success path. If an error is returned earlier (lines 73, 127), the ticker isn't stopped and leaks. Should defer immediately after creation.
+
+- **dispatcher.go:86** - `email.NewClient()` returns a Gmail service but there's no explicit close mechanism visible. If the client holds resources, they may not be released.
+
+---
+
+### 3. RACE CONDITIONS & CONCURRENCY ISSUES
+
+- **root.go:199-207** - Unbuffered channel `updateCh` is used but the goroutine spawned might not complete before the channel is read (line 242). If the goroutine is slow, the select will hit the default case and proceed. Could race with goroutine finishing after main flow continues.
+
+- **connect.go:66, 120** - Ticker-based polling with `ticker.C` and `timeout` channels in a select loop. If both fire simultaneously, order is undefined. No jitter on the 2-second interval could cause thundering herd if many processes connect.
+
+---
+
+### 4. SECURITY VULNERABILITIES
+
+- **hook.go:888** - `exec.Command("sh", "-c", "curl -fsSL https://install.nurge.sh | sh >/dev/null 2>&1")` in `runAutoUpdate()` is a critical security risk:
+  - Pipes curl directly to sh (RCE vector if install.nurge.sh is compromised)
+  - Silent execution (>/dev/null 2>&1) hides failures
+  - No verification of downloaded binary
+  - Should use `curl` with `--cacert` or similar, verify signatures
+
+- **sync.go:34** - SQL injection vulnerability: `d.QueryRow("SELECT COALESCE(sync_cursor, '0') FROM connectors WHERE id = 'gmail-convex'").Scan()` - while hardcoded here, the pattern shows database interaction without parameterized queries in places.
+
+- **enrich.go:324, 427** - `json.Unmarshal()` into structs without size limits. Malicious JSON could cause DoS via large nested structures.
+
+---
+
+### 5. LOGICAL ERRORS & EDGE CASES
+
+- **root.go:189-193** - Command name rewriting logic assumes first arg is always the directory to init. If a legitimate subcommand is misnamed and doesn't match `isKnownCommand()`, it gets silently converted to `init <arg>`. Could silently fail or misinterpret user intent.
+
+- **send.go:56-57** - Email validation uses `strings.EqualFold()` but doesn't trim spaces consistently. User could pass `" test@example.com "` vs `"test@example.com"` and it might fail the equality check.
+
+- **dispatcher.go:242-354** - `executeDispatch()` function has very deep error handling nesting (lines 271-290 have 3+ nested if statements tracking multiple error types). If one database update fails mid-transaction, subsequent operations may not be atomic. No transaction wrapper visible.
+
+- **hook.go:388-432** - Banner rotation logic uses `time.Now().YearDay() % 5` and `time.Now().YearDay() / 5 % len(actions)`. If YearDay changes during execution (unlikely but possible in edge cases), inconsistency could occur.
+
+- **dispatch.go:250-252** - Three nested string trim operations to find `fromAddress`, but if all are empty, falls through to a generic error. No explicit validation that at least one should exist before this code path.
+
+- **tasks.go:179-190** - Time arithmetic with `delta.Sub(now.UTC())` but `dueAt` is parsed without timezone verification. If `dueAt` is in a different timezone, calculations are wrong.
+
+---
+
+### 6. INCONSISTENT PATTERNS & DEAD CODE
+
+- **account.go:19-27** - The `accountFormat` flag is checked but on error (line 20-27), it returns early if not JSON format, but then continues past line 28 without clearing the flag. Pattern is: check error, handle JSON path, then non-JSON path. This is confusing because the error path exits early.
+
+- **log.go:25** - `cmd.Flags().GetString("class")` is called and result assigned, but error (second return value) is ignored with `_`. All other similar calls do this too, but it's inconsistent with some safe alternatives.
+
+- **dispatcher.go:272-290** - Multiple sequential error checks all call `return results, markErr` / `return results, updateErr` etc. If any fails, partial state is in DB (task attempt marked but send state not updated). Should wrap in transaction.
+
+- **skills.go:240-253** - The code saves skill versions only if database opens successfully (`if dbErr == nil`) but doesn't warn user if skills were written to disk but versions weren't recorded.
+
+- **hook.go:212** - Redundant deferred close: `session.CreateSession(d, ...)` followed by eventual `d.Close()` - but what if CreateSession panics? The defer at line 217 handles it, but it's not immediately after Open.
+
+---
+
+### 7. OVER-ENGINEERING & UNNECESSARY COMPLEXITY
+
+- **hook.go:114-176** - `gatherStatus()` function performs ~10+ separate database queries/scans without batching, fetching stats one-by-one. Could be optimized with a single query or transaction.
+
+- **root.go:210-232** - Stdout wrapping with os.Pipe for metrics counting is complex and fragile. Alternative: wrap the writer earlier in the call chain or use a simpler mechanism.
+
+- **dispatcher.go:362-378** - `preview()`, `shellSnippet()`, `dispatchSubject()` are utility functions defined at module level when they could be methods or inline functions.
+
+---
+
+### 8. MISSING VALIDATION & INPUT CHECKS
+
+- **campaigns.go:39** - `sequence.CreateCampaign()` is called without validating `campaignSequence` exists as a valid template. No validation that the sequence name is real.
+
+- **sequence.go:176** - `sequence.SaveTemplate()` receives `payload.Steps` without validating that steps are in correct order or have valid delays.
+
+- **leads.go:85** - `sequence.ImportLeadsCSV()` is called on `leadsImportFile` without checking the file exists or is readable (error handling happens downstream, but could fail silently on missing file).
+
+- **enrich.go:558** - `json.Unmarshal()` of `companiesJSON` doesn't validate that it's actually an array before proceeding.
+
+---
+
+### 9. INCONSISTENT ERROR MESSAGES
+
+- **disconnect.go:25** - Error message: `"%s is not connected"` is generic. Should specify "connector" or "service" for clarity.
+
+- **campaign.go:31** - Error says `"--sequence is required"` but doesn't explain what sequence is or how to list available ones.
+
+---
+
+### 10. FILE PERMISSION ISSUES
+
+- **dispatcher.go:219-220** - `os.MkdirAll(destDir, 0755)` creates world-readable automation scripts. Sensitive data (Convex URLs, task info) could be exposed.
+
+- **skills.go:229-230** - `os.WriteFile(path, []byte(e.Content), 0644)` writes skill files world-readable. If skills contain sensitive instructions, this is a concern.
+
+---
+
+### SUMMARY TABLE
+
+| Issue | Severity | Files | Lines |
+|-------|----------|-------|-------|
+| SQL/shell injection via pipes | Critical | hook.go, root.go | 888, 214 |
+| Resource leaks (tickers) | High | connect.go | 66, 120 |
+| Ignored exec errors | High | sync.go, disconnect.go | 76, 30 |
+| Race conditions (channels) | High | root.go | 199-207 |
+| Transaction atomicity | Medium | dispatcher.go | 242-354 |
+| Silent database failures | Medium | hook.go, skills.go | 209-218, 240-253 |
+| Complex stdout wrapping | Medium | root.go | 210-232 |
+| Validation gaps | Medium | campaigns.go, sequence.go | 39, 176 |
+| Inconsistent error handling | Low | Multiple | Various |</result>
+<usage><total_tokens>108559</total_tokens><tool_uses>38</tool_uses><duration_ms>102596</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a2cdfb27559e5d765.output
+
+---
+
+<task-notification>
+<task-id>ab5999fbc4d262d4d</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/ab5999fbc4d262d4d.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze tests for coverage gaps" completed</summary>
+<result>Perfect! Now I have enough information. Let me compile the comprehensive report.
+
+## Test Coverage Analysis Report - Nurgesh Project
+
+### Executive Summary
+
+The nurgesh project has **32 test files** covering approximately **23% of Go source files** (32 test files for 140+ source files). While some critical paths have tests, large portions of the codebase remain untested, particularly:
+- All CLI command handlers (37 cmd files with no tests)
+- Complex business logic modules
+- Error handling edge cases
+- Integration paths
+
+---
+
+### Test Coverage Matrix
+
+#### Tested Packages (32 test files):
+1. **internal/account** - 1 file tested (token_test.go)
+2. **internal/assembly** - 3 files tested (assembler, resume, templates)
+3. **internal/automation** - 1 file tested (wrapper_test.go)
+4. **internal/connector** - 3 files tested (generic, registry, yaml)
+5. **internal/email** - 5 files tested (client, context, emails, replies, sync, tasks)
+6. **internal/enrich** - 3 files tested (enrich, provider, waterfall)
+7. **internal/project** - 1 file tested (config_test.go)
+8. **internal/resolve** - 1 file tested (resolve_test.go) - *comprehensive*
+9. **internal/sequence** - 2 files tested (operator, sequence)
+10. **internal/session** - 1 file tested (strategic_memory_test.go)
+11. **internal/sync** - 3 files tested (session_summary, strategic_memory, sync)
+12. **internal/tier** - 1 file tested (tier_test.go)
+
+#### Untested Packages (110+ files):
+- **All 37 cmd/ files** - No test coverage for CLI handlers
+- **internal/account** - auth.go, convex.go, google.go, sync.go (4 files)
+- **internal/assembly** - cache.go, dossier.go, knowledge.go (3 files)
+- **internal/connector** - connector.go, credentials.go, embed.go, oauth.go (4 files)
+- **internal/db** - db.go (critical)
+- **internal/email** - check.go, classify_auto.go, classify.go, list_compact.go, list.go, send.go, stats.go (7 files)
+- **internal/enrich** - embed.go, freeapis.go (2 files)
+- **internal/metrics** - metrics.go
+- **internal/project** - init.go, step_*.go (8 files)
+- **internal/scraper** - scraper.go
+- **internal/sequence** - branching.go, campaigns.go, engagement.go, health.go, leads_import.go, reply_queue.go, sends.go, templates_store.go (8 files)
+- **internal/session** - distill.go, drafts.go, input.go, learning.go, logger.go, store.go (6 files)
+- **internal/update** - check.go, update.go
+- **internal/util** - browser.go, callbackserver.go
+
+---
+
+### Test Quality Issues Found
+
+#### 1. **Weak Error Assertions (High Risk)**
+
+These tests only check that an error occurred, not the specific error or its implications:
+
+**File: internal/email/client_test.go:8-23**
+```go
+func TestNewClient_MissingToken(t *testing.T) {
+    _, err := NewClient("nonexistent/token.json")
+    if err == nil {
+        t.Fatal("expected error for missing token")
+    }
+    // ❌ WEAK: Doesn't verify the client is nil or the error message
+}
+```
+
+**Similar patterns found in:**
+- internal/account/token_test.go:62, 86 (LoadAuth failures)
+- internal/assembly/assembler_test.go:33 (AssembleInvalidTask)
+- internal/connector/yaml_test.go:99, 115, 131 (YAML validation)
+- internal/enrich/enrich_test.go:51, 61 (EnrichMissingContact, EnrichEmptyEmail)
+- internal/email/context_test.go:12 (GenerateContext - only checks count, not content)
+
+**Risk:** Tests can pass even if error messages are wrong or error types are incorrect.
+
+---
+
+#### 2. **Insufficient Return Value Validation**
+
+**File: internal/email/context_test.go:7-22**
+```go
+func TestGenerateContext(t *testing.T) {
+    // ... setup ...
+    ctx, err := GenerateContext(d)
+    if err != nil {
+        t.Fatal(err)
+    }
+    if ctx.TotalEmails != 3 {
+        t.Fatalf("expected 3 total, got %d", ctx.TotalEmails)
+    }
+    // ❌ WEAK: No validation of ctx structure, only one field checked
+    // ❌ Missing: OutboundCount, InboundCount relationships
+    // ❌ Missing: nil pointer checks
+}
+```
+
+---
+
+#### 3. **Missing Edge Case Coverage**
+
+**File: internal/assembly/assembler_test.go**
+
+Lines 41-58 (TestAssembleEmptyDB): Tests empty database but doesn't verify:
+- ❌ What happens with null/empty atoms
+- ❌ What happens when specific atom types are missing
+- ❌ Boundary conditions for token estimates
+
+**File: internal/sequence/operator_test.go:10-27**
+```go
+func TestBuildDispatcherScriptIncludesExpectedFlags(t *testing.T) {
+    script, err := BuildDispatcherScript(...)
+    // ❌ No tests for:
+    // - Empty project root
+    // - Invalid executable path
+    // - Special characters in paths
+    // - Very long paths (PATH_MAX boundaries)
+}
+```
+
+---
+
+#### 4. **Over-Mocking and Hidden Bugs**
+
+**File: internal/resolve/resolve_test.go:746-759**
+
+The resolve_test.go file is comprehensive but contains potential over-mocking issues:
+
+```go
+func TestResolveCSV_TechStackAsCSV(t *testing.T) {
+    // Lines 610-651
+    // ❌ ISSUE: Test writes CSV file but doesn't verify CSV parsing robustness
+    // ❌ ISSUE: No tests for malformed CSV (missing fields, quote issues)
+    // ❌ ISSUE: No tests for very large CSV files (memory limits)
+    // ❌ ISSUE: No tests for special characters/unicode handling
+}
+```
+
+---
+
+#### 5. **Missing Coverage for Critical Untested Paths**
+
+**CRITICAL: internal/email/send.go - NO TESTS**
+```go
+func Send(srv *gm.Service, from string, opts SendOptions) (*SentMessage, error) {
+    // Lines 26-54
+    // ❌ NO TEST COVERAGE for:
+    // - Empty To field validation
+    // - Invalid email format handling
+    // - Gmail API failures
+    // - ThreadID handling edge cases
+    // - Raw message building correctness (RFC 2822 compliance)
+}
+```
+
+**CRITICAL: internal/email/classify_auto.go - NO TESTS**
+```go
+func ClassifyAuto(d *sql.DB, senderDomain string) (*AutoClassifyResult, error) {
+    // Lines 21-80
+    // ❌ NO TEST COVERAGE for:
+    // - Empty senderDomain handling
+    // - Null values in email fields
+    // - Very large result sets
+    // - Heuristic classification edge cases
+    // - DB query failures
+}
+```
+
+**CRITICAL: internal/sequence/health.go - NO TESTS**
+```go
+func ListMailboxHealth(...) ([]MailboxHealth, error) {
+    // Lines 39-76
+    // ❌ NO TEST COVERAGE for:
+    // - Empty mailbox list
+    // - DNS lookup failures
+    // - Invalid domain formats
+    // - Zero bounce stats
+    // - Health score calculation edge cases
+}
+```
+
+**CRITICAL: internal/account/google.go - NO TESTS**
+```go
+func ExchangeGoogleCode(ctx context.Context, port int, code string) {
+    // Lines 56-77
+    // ❌ NO TEST COVERAGE for:
+    // - Invalid authorization codes
+    // - Network timeouts
+    // - Missing id_token in response
+    // - Malformed JWT tokens
+    // - OAuth state parameter validation
+}
+```
+
+**CRITICAL: internal/account/convex.go - NO TESTS**
+```go
+func (c *ConvexClient) ValidateToken(token string) (*User, error) {
+    // Lines 47-76
+    // ❌ NO TEST COVERAGE for:
+    // - HTTP error responses (4xx, 5xx)
+    // - JSON parsing failures
+    // - Network timeouts
+    // - Invalid token formats
+    // - Response body reading failures
+}
+```
+
+---
+
+#### 6. **Database Integrity Tests Are Shallow**
+
+**File: internal/sync/sync_test.go:223-278**
+```go
+func TestUpsertRow(t *testing.T) {
+    // Only tests suppressions table
+    // ❌ MISSING: Tests for other 9+ tables with sync_version
+    // ❌ MISSING: Concurrent upsert scenarios
+    // ❌ MISSING: Transaction rollback scenarios
+    // ❌ MISSING: Foreign key constraint violations
+}
+```
+
+**File: internal/tier/tier_test.go**
+- Tests only ScoreContact function
+- ❌ MISSING: Tests for ScoreAndSave with actual file I/O
+- ❌ MISSING: Tests for BatchScore concurrency
+- ❌ MISSING: Tests for floating point precision edge cases
+
+---
+
+#### 7. **Flaky Test Patterns**
+
+**File: internal/session/strategic_memory_test.go:29-91**
+```go
+func TestSaveSkillVersionWritesDiskAndMarksStaleWhenDataGrows(t *testing.T) {
+    // Lines 60-73: Inserts 60 emails in a loop
+    // ⚠️ FLAKY RISK: Time-dependent test (relies on database inserts completing)
+    // ⚠️ FLAKY RISK: Changes working directory (os.Chdir) - not isolated
+    // ⚠️ FLAKY RISK: File system operations without proper cleanup assertions
+}
+```
+
+**File: internal/resolve/resolve_test.go:653-701**
+```go
+func TestResolveCSV_DBCascadeDedup(t *testing.T) {
+    // Time-sensitive database operations
+    // ⚠️ FLAKY RISK: Depends on placeholder email generation logic
+    // ⚠️ FLAKY RISK: String comparison without normalization
+}
+```
+
+---
+
+#### 8. **Tests Passing with Broken Code Scenarios**
+
+**File: internal/assembly/assembler_test.go:201-241 (TestAssembleCaching)**
+```go
+// ❌ ISSUE: Test would PASS even if:
+// - InvalidateCache() doesn't actually clear cache
+// - Cache key generation is wrong (would incorrectly match)
+// - Context returned is empty but cached flag is correct
+
+result1, _ := Assemble(d, AssembleRequest{Task: TaskOutbound})
+// No verification of actual context content
+if !result1.Cached { // Only checks boolean flag
+    t.Error("first call should not be cached")
+}
+```
+
+**File: internal/connector/generic_test.go:26-54 (TestBuildOAuthConfig)**
+```go
+// ❌ ISSUE: Test passes if:
+// - OAuth URL parsing fails but function returns non-nil cfg
+// - Scopes list is malformed but length is 2
+// - Extra params aren't properly merged
+
+cfg, opts, err := gc.buildOAuthConfig("test-client-id", "test-secret")
+if len(cfg.Scopes) != 2 { // Only checks length, not scope values
+    t.Errorf("Scopes len = %d, want 2", len(cfg.Scopes))
+}
+// Missing: Verification that actual scopes are ["contacts.read", "deals.read"]
+```
+
+---
+
+#### 9. **No Negative Tests in Command Logic**
+
+**All 37 cmd/ files have ZERO tests for:**
+- Invalid flag combinations
+- Missing required flags
+- Conflicting options
+- Database unavailable scenarios
+- Network timeout handling
+- Permission denial scenarios
+- File not found cases
+
+Example untested critical path:
+```go
+// cmd/enrich.go - NO TEST
+// What happens if:
+// - enrichDB is nil?
+// - ContactEmail is invalid format?
+// - Provider returns malformed response?
+// - Database transaction fails mid-operation?
+```
+
+---
+
+### Detailed Coverage Statistics
+
+| Component | Tested Files | Total Files | % Coverage |
+|-----------|-------------|------------|-----------|
+| cmd/ | 0 | 37 | 0% |
+| internal/account | 1 | 5 | 20% |
+| internal/assembly | 3 | 6 | 50% |
+| internal/connector | 3 | 7 | 43% |
+| internal/email | 5 | 13 | 38% |
+| internal/enrich | 3 | 5 | 60% |
+| internal/project | 1 | 9 | 11% |
+| internal/resolve | 1 | 1 | 100% |
+| internal/sequence | 2 | 9 | 22% |
+| internal/session | 1 | 6 | 17% |
+| internal/sync | 3 | 3 | 100% |
+| internal/tier | 1 | 1 | 100% |
+| **OVERALL** | **32** | **140+** | **23%** |
+
+---
+
+### Critical Risk Areas (High Priority for Testing)
+
+**Tier 1 (Critical Business Logic - Must Test)**
+1. /internal/email/send.go - Email sending is core functionality
+2. /internal/email/classify.go - Email classification affects all downstream logic
+3. /internal/account/google.go - OAuth failures block entire application
+4. /internal/sequence/health.go - Delivery health affects sending decisions
+5. /internal/resolve/resolve.go - Input resolution is entry point (only partially tested)
+
+**Tier 2 (Integration Points - Should Test)**
+1. /internal/project/init.go - Project initialization has file I/O and state
+2. /internal/connector/oauth.go - OAuth implementation is security-critical
+3. /internal/session/learning.go - Learning system is core feature
+4. /internal/sequence/branching.go - Branching logic affects campaign execution
+
+**Tier 3 (Error Handling - Needs Coverage)**
+1. All cmd/ files - CLI command error paths
+2. /internal/email/list.go - List filtering edge cases
+3. /internal/enrich/freeapis.go - Free API fallback logic
+4. /internal/update/check.go - Update checking robustness
+
+---
+
+### Summary of Test Quality Issues
+
+| Issue Type | Count | Severity |
+|-----------|-------|----------|
+| Missing test files | 110+ | CRITICAL |
+| Weak error assertions | 14 | HIGH |
+| Insufficient return value checks | 8 | HIGH |
+| Missing edge cases | 23 | HIGH |
+| Flaky test patterns | 3 | MEDIUM |
+| Tests that mask broken code | 6 | HIGH |
+| Over-mocking hiding bugs | 4 | MEDIUM |
+| No negative test cases | 37+ cmd files | CRITICAL |
+
+---
+
+### Recommendations
+
+1. **Immediate**: Add tests for critical paths (email send, OAuth, classify)
+2. **High Priority**: Add negative tests for all cmd/ handlers
+3. **Medium Priority**: Improve assertions in existing tests (validate actual values, not just presence)
+4. **Ongoing**: Add edge case tests for database operations, especially in sync/resolve
+5. **Quality Gates**: Enforce >70% code coverage before merging, with specific requirements for critical paths</result>
+<usage><total_tokens>93044</total_tokens><tool_uses>44</tool_uses><duration_ms>135661</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/ab5999fbc4d262d4d.output
+
+---
+
+<task-notification>
+<task-id>a763c64d14d8b573d</task-id>
+<tool-use-id>toolu_01HoLoC1WffPpdcoP6bJ7vFV</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a763c64d14d8b573d.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze internal/db for bugs" completed</summary>
+<result>Now let me document all my findings. Let me create a comprehensive review:
+
+Based on my thorough code review of the `/Users/rejoesudarsan/Projects/nurgesh/internal/db/` directory and related database access code, here is a detailed report:
+
+## DETAILED CODE REVIEW REPORT
+
+### 1. SQL INJECTION VULNERABILITIES
+
+**CRITICAL - VERIFIED SAFE WITH MITIGATIONS:**
+
+All parameterized queries use proper placeholder syntax (`?`), protecting against SQL injection. However, there are a few concerning patterns that rely on internal/trusted data:
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`**
+- **Line 629**: `fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", spec.table, spec.column, spec.columnTypeDDL)` 
+  - Risk Level: LOW (spec fields are hardcoded in columnSpecs slice, not user-input)
+  - But this pattern is **brittle** - table/column names not escaped
+
+- **Line 651**: `fmt.Sprintf("PRAGMA table_info(%s)", table)` 
+  - Risk Level: LOW (called only with hardcoded table names from executionTables/localTables)
+  - PRAGMA doesn't support parameters in SQLite, so sprintf is necessary, but should validate table names
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`**
+- **Line 247**: `fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) ON CONFLICT(id) DO UPDATE SET %s", row.Table, ...)`
+  - Risk Level: MEDIUM - `row.Table` comes from external Convex API response (line 248)
+  - **VULNERABILITY**: Table name injection possible if Convex returns untrusted table names
+  - Should validate table against whitelist (executionTables) before building query
+  - **FIX**: Add validation at line 223: `if !isValidExecutionTable(row.Table) { return fmt.Errorf(...) }`
+
+- **Line 262**: `fmt.Sprintf("SELECT * FROM %s", table)`
+  - Risk Level: LOW (table parameter checked against hardcoded list at line 148)
+  - Still should validate explicitly before use
+
+- **Line 345**: `fmt.Sprintf("UPDATE %s SET sync_version = ? WHERE id = ?", table)`
+  - Risk Level: LOW (table parameter comes from executionTables slice iteration)
+  - Should add validation check
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/enrich.go`**
+- **Line 271**: `fmt.Sprintf(\`SELECT COUNT(*) FROM contacts WHERE %s != '' AND %s IS NOT NULL\`, col, col)`
+  - Risk Level: MEDIUM - `col` comes from fieldColumns map (line 269)
+  - Column names are internally maintained map keys, but no validation
+  - Should validate col against allowed list explicitly
+
+- **Line 372**: `fmt.Sprintf("UPDATE contacts SET %s WHERE email = ?", strings.Join(setClauses, ", "))`
+  - Risk Level: LOW-MEDIUM - setClauses built dynamically from enrichableColumns keys
+  - Column names properly sourced from validation, but construction is fragile
+  - Single breach in enrichableColumns map validation exposes vulnerability
+
+---
+
+### 2. MISSING ERROR HANDLING
+
+**HIGH PRIORITY ISSUES:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/assembly/dossier.go`**
+- **Line 103**: `DeleteDossier()` - No error returned from db.Exec
+  ```go
+  func DeleteDossier(db *sql.DB, contactEmail string) error {
+      _, err := db.Exec(`DELETE FROM research_dossiers WHERE contact_email = ?`, contactEmail)
+      return err  // Returns err which could be nil or sql error, but function should validate success
+  }
+  ```
+  - **Issue**: Should check `RowsAffected()` to confirm deletion actually occurred
+  - Missing: No validation that contact email exists before deletion
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/learning.go`**
+- **Line 123**: `writeSkillToDisk()` called but error from tx.Commit() might mask disk write failures
+  ```go
+  if err := tx.Commit(); err != nil {
+      return 0, fmt.Errorf("committing transaction: %w", err)
+  }
+  if err := writeSkillToDisk(skillName, content); err != nil {
+      return 0, err
+  }
+  ```
+  - **Issue**: Disk write happens AFTER transaction commits. If disk write fails, DB is committed but file missing
+  - **Race Condition**: State inconsistency between DB and filesystem
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/distill.go`**
+- **Line 206**: JSON unmarshal errors silently ignored
+  ```go
+  if strings.TrimSpace(affectedSkillsJSON) != "" {
+      _ = json.Unmarshal([]byte(affectedSkillsJSON), &item.AffectedSkills)  // Error ignored!
+  }
+  if strings.TrimSpace(evidenceJSON) != "" {
+      _ = json.Unmarshal([]byte(evidenceJSON), &item.Evidence)  // Error ignored!
+  }
+  ```
+  - **Issue**: Corrupted JSON in database silently accepted, partial/zero data returned
+  - Should log errors or return partial data indicator
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/enrich.go`**
+- **Line 155**: Cache lookup error silently continues
+  ```go
+  cached, err := assembly.GetCached(db, provName, cacheKey)
+  if err != nil {
+      log.Printf("cache lookup error for %s/%s: %v", provName, field, err)
+      continue  // Silently skips this provider
+  }
+  ```
+  - **Issue**: Real DB errors indistinguishable from cache misses
+  - Should distinguish between "not found" (nil, no error) vs DB error
+
+- **Line 482**: Error ignored in CacheKey generation
+  ```go
+  inputKey, _ := assembly.CacheKey(input.Provider, input.ContactEmail)
+  ```
+  - **Issue**: If hash generation fails, proceeds with empty/wrong key
+  - Could cause cache poisoning with wrong key
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/assembly/cache.go`**
+- **Line 78**: RowsAffected() error ignored
+  ```go
+  result, err := db.Exec(\`DELETE FROM enrichment_cache WHERE expires_at <= datetime('now')\`)
+  if err != nil {
+      return 0, fmt.Errorf("purging expired cache: %w", err)
+  }
+  return result.RowsAffected()  // Ignores error from RowsAffected()
+  ```
+  - **Issue**: Some databases return error from RowsAffected()
+  - Should check both return values
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/store.go`**
+- **Line 26-33**: AddEvent/AddCheckpoint JSON marshaling errors silently default to empty
+  ```go
+  payloadJSON, err := json.Marshal(payload)
+  if err != nil {
+      payloadJSON = []byte("{}")  // Silent failure, no log
+  }
+  ```
+  - **Issue**: Caller doesn't know if JSON serialization failed
+  - Lost data not reported
+
+---
+
+### 3. SCHEMA ISSUES
+
+**MISSING UNIQUE CONSTRAINTS:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`**
+
+- **Lines 451-466**: `knowledge_atoms` table - Missing composite unique index
+  ```sql
+  CREATE TABLE IF NOT EXISTS knowledge_atoms (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      atom_type TEXT NOT NULL,
+      scope TEXT NOT NULL DEFAULT '',
+      ...
+  );
+  CREATE INDEX IF NOT EXISTS idx_knowledge_atoms_scope ON knowledge_atoms(atom_type, scope);
+  ```
+  - **Issue**: Index exists but NOT UNIQUE, so duplicates possible
+  - Code assumes uniqueness at `/Users/rejoesudarsan/Projects/nurgesh/internal/assembly/knowledge.go:77`
+  - `ON CONFLICT(atom_type, scope)` will FAIL at runtime if composite unique index missing
+  - **Fallback** implemented at line 92-120 catches this, but workaround is inefficient and racy
+  - **FIX**: Schema line 465 should be: `CREATE UNIQUE INDEX IF NOT EXISTS idx_knowledge_atoms_scope ON knowledge_atoms(atom_type, scope);`
+
+**MISSING FOREIGN KEY CONSTRAINTS:**
+
+- **Line 289**: `sequence_enrollments(mailbox_id)` has FOREIGN KEY but no CASCADE rule
+  ```sql
+  FOREIGN KEY (mailbox_id) REFERENCES mailboxes(id)
+  ```
+  - **Issue**: Deleting a mailbox leaves orphaned enrollments
+  - Sync code assumes this reference is valid (line 207-219 in sync.go)
+  - **FIX**: Add `ON DELETE RESTRICT` or `ON DELETE CASCADE` per business logic
+
+- **Line 264, 316, 317, 356, 443**: Multiple FK constraints lack DELETE rules
+  - `mailbox_daily_usage`, `follow_up_tasks`, `reply_events`, `sequence_drafts`
+  - All reference `mailboxes(id)` or `sequence_enrollments(id)` without cascade
+
+**INCORRECT TYPES:**
+
+- **Line 59**: `account TEXT DEFAULT ''` in connectors table
+  - **Issue**: Should this be NOT NULL? Or validated?
+  - Similar fields like `source` have defaults but inconsistent nullability
+
+- **Lines 240-250**: `mailboxes` table hour fields are INTEGERS not checked for 0-23 range
+  ```sql
+  send_window_start_hour INTEGER NOT NULL DEFAULT 8,
+  send_window_end_hour INTEGER NOT NULL DEFAULT 18,
+  ```
+  - **Issue**: No CHECK constraint to validate 0-23 range
+  - Invalid data silently accepted from sync
+
+**MISSING INDEXES:**
+
+- **Line 268**: No index on `engagement_events(enrollment_id, occurred_at)` 
+  - Queries filter both fields but index only on enrollment_id
+  
+- **Line 435**: No index on `sequence_drafts(task_id)` for lookups
+  - Line 447 creates UNIQUE INDEX but sync.go line 185 uses task_id in loop (performance?)
+
+- **Line 321**: No index on `mailbox_send_events(mailbox_id, sent_at)` 
+  - Line 404 has this! But only (`mailbox_id`, `sent_at`)
+  - Missing reverse order for DESC queries
+
+**PROBLEMATIC DEFAULTS:**
+
+- **Line 84, 85**: Emails table uses SQL `datetime('now')` as default
+  ```sql
+  created_at TEXT DEFAULT (datetime('now')),
+  synced_at TEXT DEFAULT (datetime('now'))
+  ```
+  - **Issue**: Default runs at table creation time, not row insertion
+  - Should use `CURRENT_TIMESTAMP` (SQLite) or insert current time in Go
+  - **Actually SQLite supports this**, but inconsistent with code patterns that manually set `datetime('now')`
+
+---
+
+### 4. MIGRATION ISSUES
+
+**ORDERING & IDEMPOTENCY:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`**
+
+**Lines 536-648**: `ensureMigrations()` function
+
+- **Issue 1: Column Addition Order Dependency**
+  - Line 621-632 adds columns in a specific order
+  - If a column depends on another (e.g., foreign key), wrong order could cause issues
+  - SQLite allows adding columns, but no validation of dependencies
+
+- **Issue 2: Backfill Queries After Migrations**
+  - **Lines 634-645**: Backfill UPDATEs run AFTER columns added
+  ```go
+  if _, err := db.Exec(\`UPDATE mailboxes SET warmup_started_at = created_at WHERE warmup_started_at = ''\`)
+  if _, err := db.Exec(\`UPDATE learnings SET updated_at = COALESCE(NULLIF(updated_at, ''), created_at, datetime('now'))\`)
+  ```
+  - **Risk**: If process crashes between column addition and backfill, state inconsistent
+  - Should use transaction wrapper
+
+- **Issue 3: Non-Transactional Migrations**
+  - Line 536 calls `ensureMigrations(db)` without transaction
+  - Multiple ALTER + UPDATE statements not atomic
+  - **If crash occurs mid-migration**: Database left in broken state
+  - **FIX**: Wrap all migration steps in single transaction
+
+- **Issue 4: `hasColumn()` Not Bulletproof**
+  - Line 651: Uses PRAGMA table_info which returns columns in order
+  - Iterates all rows even after match found (minor inefficiency)
+  - **Line 651**: Doesn't validate table name exists before PRAGMA
+  - If table doesn't exist, PRAGMA returns empty result set → returns false (misleading!)
+
+- **Issue 5: Duplicate Column Additions**
+  - Line 569: `emails.unipile_id` added
+  - Line 568: `emails.provider_id` added
+  - Code doesn't prevent re-running migrations multiple times
+  - Actually OK due to `IF NOT EXISTS` at table level, but individual ALTER runs regardless
+
+---
+
+### 5. CONNECTION & TRANSACTION LEAKS
+
+**HIGH PRIORITY:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`**
+
+- **Line 28-34**: Cleanup on error is correct
+  ```go
+  if _, err := db.Exec(Schema); err != nil {
+      db.Close()  // Good
+      return nil, fmt.Errorf("ensuring schema: %w", err)
+  }
+  ```
+  - **But**: Line 21-36 Open() function has single open connection
+  - Line 26: `db.SetMaxOpenConns(1)` - Serializes ALL requests!
+  - **Issue**: High latency for concurrent access (SQLite limitation acknowledged but harsh)
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/learning.go`**
+
+- **Line 85**: `defer tx.Rollback()` in SaveSkillVersion
+  ```go
+  tx, err := db.Begin()
+  if err != nil {
+      return 0, fmt.Errorf("beginning transaction: %w", err)
+  }
+  defer tx.Rollback()  // Good
+  ...
+  if err := tx.Commit(); err != nil {
+      return 0, fmt.Errorf("committing transaction: %w", err)
+  }
+  ```
+  - **Issue**: After tx.Commit() succeeds, defer tx.Rollback() still runs
+  - Rollback after commit is harmless but wasteful (harmless in SQLite)
+
+- **Line 190**: Same pattern in RollbackSkill()
+  - Rollback called after commit succeeds
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/distill.go`**
+
+- **Line 176**: db.Query() rows not explicitly closed in error path
+  ```go
+  rows, err := db.Query(\`SELECT id, content FROM knowledge_atoms WHERE atom_type = ?\`, atomType)
+  if err != nil {
+      return false, err  // rows never allocated, OK
+  }
+  defer rows.Close()
+  ```
+  - **Actually fine** - rows.Close() in defer catches errors
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`**
+
+- **Line 269**: Query loop with multiple rows.Close() calls
+  ```go
+  sqlRows, err := e.db.Query(query, args...)
+  if err != nil {
+      return nil, err
+  }
+  defer sqlRows.Close()
+  ...
+  for sqlRows.Next() {
+      ...
+  }
+  return rows, sqlRows.Err()
+  ```
+  - **OK**: Proper defer usage, but multiple Query() calls in function
+  - **Line 91-103, 116-127, 159-170**: Three separate Query() calls, all have defer Close()
+  - **Risk**: If one fails, others continue - should consider early return
+
+---
+
+### 6. RACE CONDITIONS WITH SQLITE
+
+**CRITICAL - FUNDAMENTAL LIMITATIONS:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`**
+
+- **Lines 203-219**: Check-then-act race condition
+  ```go
+  func (e *Engine) wouldExceedMailboxLimit(id string) (bool, error) {
+      var exists bool
+      err := e.db.QueryRow("SELECT EXISTS(SELECT 1 FROM mailboxes WHERE id = ?)", id).Scan(&exists)
+      if err != nil {
+          return false, err
+      }
+      if exists {
+          return false, nil  // Update allowed
+      }
+      var count int
+      err = e.db.QueryRow("SELECT COUNT(*) FROM mailboxes").Scan(&count)
+      if err != nil {
+          return false, err
+      }
+      return count >= 2, nil  // RACE: Another process could insert between these queries!
+  }
+  ```
+  - **Race Condition**: Between EXISTS query and COUNT query, another sync could insert mailbox
+  - **Result**: Could exceed limit of 2 mailboxes
+  - **FIX**: Wrap in transaction with SERIALIZABLE isolation
+
+- **Line 185-189**: TOCTOU race in sync loop
+  ```go
+  for id, version := range resp.Versions {
+      for _, row := range batch {
+          if row.ID == id {
+              if err := e.updateSyncVersion(row.Table, id, version); err != nil {
+                  return nil, fmt.Errorf(...)
+              }
+              break
+          }
+      }
+  }
+  ```
+  - **Issue**: Nested loop searching batch, inefficient and unclear intent
+  - **Race**: Between fetch and update, server could have new version
+  - Not critical since updateSyncVersion just updates timestamp, but fragile
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/learning.go`**
+
+- **Line 89-99**: Max version calculation without transaction
+  ```go
+  var maxVersion sql.NullInt64
+  err = tx.QueryRow(\`SELECT MAX(version) FROM skill_versions WHERE skill_name = ?\`, skillName).Scan(&maxVersion)
+  ```
+  - **Actually inside transaction**, so OK
+  - But if two transactions run simultaneously without explicit locking, both could compute nextVersion=2
+  - SQLite WAL mode with SetMaxOpenConns(1) prevents concurrent writes, so this is mitigated by design
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/enrich.go`**
+
+- **Lines 202-237**: BatchEnrich reads list then loops individually
+  ```go
+  rows, err := db.Query(\`SELECT email FROM contacts WHERE enriched_at = '' OR enriched_at IS NULL LIMIT ?\`, limit)
+  ...
+  for _, email := range emails {
+      r, err := Enrich(db, EnrichRequest{ContactEmail: email})
+      if err != nil {
+          log.Printf("enrich: skipping %s: %v", email, err)
+          continue
+      }
+  }
+  ```
+  - **Issue**: Between Query and Enrich loops, other process could enrich that contact
+  - Result: Concurrent re-enrichment (not catastrophic but wasteful)
+  - **FIX**: Lock/transaction or idempotent upsert
+
+---
+
+### 7. DEAD CODE & OVER-ENGINEERING
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/assembly/knowledge.go`**
+
+- **Lines 92-120**: `seedAtomFallback()` function exists due to missing schema index
+  ```go
+  func seedAtomFallback(db *sql.DB, atomType AtomType, scope string, ...) (int64, error) {
+      var id int64
+      err := db.QueryRow(\`SELECT id FROM knowledge_atoms WHERE atom_type = ? AND scope = ?\`, ...
+  }
+  ```
+  - **Dead Code Risk**: Fallback is workaround for missing unique constraint
+  - Once schema is fixed with unique index, fallback becomes dead code
+  - Should remove after schema migration succeeds
+  - Currently masks schema bug instead of failing loudly
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`**
+
+- **Lines 233-256**: `upsertRow()` builds INSERT...ON CONFLICT query dynamically
+  ```go
+  columns := []string{"id"}
+  placeholders := []string{"?"}
+  values := []any{row.ID}
+  updateParts := []string{}
+  
+  for col, val := range row.Data {
+      columns = append(columns, col)
+      placeholders = append(placeholders, "?")
+      values = append(values, val)
+      updateParts = append(updateParts, fmt.Sprintf("%s = excluded.%s", col, col))
+  }
+  ```
+  - **Over-engineering**: Dynamically building query for every upserted row
+  - **Fragile**: Column iteration order affects query structure (though result same)
+  - **Issue**: No validation that columns exist in target table
+  - If Convex schema adds column not in SQLite, query fails mid-sync
+  - **Better**: Pre-generate per-table upsert templates OR use PRAGMA to validate columns
+
+---
+
+### 8. LOGIC BUGS IN QUERIES
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/session_summary.go`**
+
+- **Lines 91-98**: Query uses wrong comparison
+  ```go
+  replyRows, err := e.db.Query(\`
+      SELECT contact_email, classification, subject
+      FROM reply_events
+      WHERE sync_version > ? AND sync_version <= ? AND status = 'open'
+      ORDER BY sync_version DESC
+      LIMIT 3\`,
+      previousVersion,
+      currentVersion,
+  )
+  ```
+  - **Logic OK**: But LIMIT 3 with ORDER BY DESC sync_version means "3 most recent"
+  - **Issue**: Should clarify intent - is this the 3 most recent replies or 3 examples?
+  - Works correctly but query intent unclear
+
+- **Lines 116-122**: Mailbox status check
+  ```sql
+  SELECT DISTINCT email
+  FROM mailboxes
+  WHERE sync_version > ? AND sync_version <= ? AND status = 'auth_expired'
+  ```
+  - **Logic Issue**: Uses DISTINCT but email should be PRIMARY KEY equivalent
+  - Unnecessary DISTINCT (minor inefficiency)
+  - **Assumption**: Assumes status='auth_expired' exists, no validation
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/learning.go`**
+
+- **Lines 132-143**: ListSkills query with LEFT JOIN
+  ```sql
+  SELECT
+      sv.skill_name,
+      COALESCE(active.version, 0) AS active_version,
+      COUNT(*) AS total_versions,
+      MAX(sv.created_at) AS last_updated
+  FROM skill_versions sv
+  LEFT JOIN skill_versions active
+      ON active.skill_name = sv.skill_name AND active.active = 1
+  GROUP BY sv.skill_name
+  ```
+  - **Logic Issue**: Joins skill_versions to itself without alias conflict
+  - **Actually OK**: Query is correct, but confusing
+  - Would be clearer with explicit table aliases: `sv AS all_versions LEFT JOIN skill_versions AS active`
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/enrich.go`**
+
+- **Lines 282-302**: loadContact() COALESCE defaults
+  ```go
+  SELECT email, name, title, company, phone, domain,
+         COALESCE(industry, ''), COALESCE(company_size, ''),
+         COALESCE(funding_stage, ''), COALESCE(linkedin_url, ''),
+         COALESCE(website, ''), COALESCE(enriched_at, ''),
+         COALESCE(enrichment_sources, '[]')
+  FROM contacts WHERE email = ?
+  ```
+  - **Issue**: COALESCEs to defaults, but columns likely have default values in schema
+  - Redundant COALESCE in SQL (though harmless)
+  - Confusing intent: Are defaults in schema or query logic?
+
+- **Lines 256-276**: Stats query builds formatted SQL strings
+  ```go
+  fieldColumns := map[string]string{...}
+  for field, col := range fieldColumns {
+      var count int
+      query := fmt.Sprintf(\`SELECT COUNT(*) FROM contacts WHERE %s != '' AND %s IS NOT NULL\`, col, col)
+  }
+  ```
+  - **Logic Issue**: Checks both `!= ''` AND `IS NOT NULL`
+  - If column is NOT NULL in schema, IS NOT NULL is redundant
+  - If column allows NULL, comparison `!= ''` with NULL returns NULL (not true), excluding NULLs anyway
+  - Query works but logic unclear - should use single condition
+
+- **Lines 340-375**: updateContactFields() builds SET clause list
+  ```go
+  for field, value := range fields {
+      col, ok := enrichableColumns[field]
+      if !ok {
+          continue
+      }
+      setClauses = append(setClauses, fmt.Sprintf("%s = ?", col))
+      args = append(args, value)
+  }
+  ```
+  - **Logic Issue**: Map iteration order non-deterministic in Go
+  - Result: Same update produces different query string each time
+  - Doesn't affect correctness (query is equivalent) but hurts caching/debugging
+
+---
+
+### 9. ADDITIONAL CRITICAL ISSUES
+
+**Foreign Key Constraints Not Enforced:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`**
+
+- **Line 12 DSN**: `_pragma=foreign_keys(1)` enables foreign key enforcement
+  ```
+  "file:.nurge/nurge.db?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)"
+  ```
+  - **Good**: Foreign keys enabled
+  - **But**: Multiple tables have FOREIGN KEY constraints without DELETE rules
+  - **Risk**: `DELETE FROM mailboxes` would fail if enrollments exist
+  - **FIX**: Add `ON DELETE CASCADE` or `ON DELETE RESTRICT` per business logic
+
+**Unhandled Edge Cases:**
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`**
+
+- **Line 114**: Mailbox limit check skips updates
+  ```go
+  if row.Table == "mailboxes" {
+      if skip, _ := e.wouldExceedMailboxLimit(row.ID); skip {
+          continue  // Silently skip upserting mailbox!
+      }
+  }
+  ```
+  - **Issue**: Error from wouldExceedMailboxLimit is ignored
+  - If limit check fails, mailbox still skipped (wrong behavior)
+  - **FIX**: `if skip, err := ...; err != nil { return nil, err } else if skip { continue }`
+
+**File: `/Users/rejoesudarsan/Projects/nurgesh/internal/session/distill.go`**
+
+- **Line 89**: Unknown learning type silently skipped
+  ```go
+  default:
+      atomTypes, ok := learningTypeToAtomTypes[typ]
+      if !ok {
+          // Unknown type — skip but still mark as distilled
+          continue
+      }
+  ```
+  - **Issue**: Losing data without indication
+  - Should log warning: `log.Printf("skipping unknown learning type: %s", typ)`
+
+---
+
+## SUMMARY TABLE
+
+| Category | Severity | Count | Status |
+|----------|----------|-------|--------|
+| SQL Injection | MEDIUM | 3 | Fixable with validation |
+| Missing Error Handling | HIGH | 7 | Requires code changes |
+| Schema Issues | HIGH | 5+ | Requires schema migration |
+| Transactions | MEDIUM | 2 | Design choice (SQLite) |
+| Race Conditions | MEDIUM | 3 | Mitigated by SetMaxOpenConns(1) |
+| Dead Code | LOW | 2 | Cleanup opportunity |
+| Logic Bugs | LOW | 5 | Minor inefficiencies |</result>
+<usage><total_tokens>74594</total_tokens><tool_uses>27</tool_uses><duration_ms>153463</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a763c64d14d8b573d.output
+
+---
+
+<task-notification>
+<task-id>adcb9baa304d9c7cb</task-id>
+<tool-use-id>toolu_01RK1sxuiEu23QKLN6x3e1gn</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/adcb9baa304d9c7cb.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze internal/connector code" completed</summary>
+<result>Perfect. Now I have enough information to write a comprehensive code review. Let me compile my findings:
+
+## COMPREHENSIVE CODE REVIEW: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/`
+
+### 1. ERROR HANDLING ISSUES
+
+#### **CRITICAL: Silently Ignored json.Marshal Errors**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 135**: `credsData, _ := json.Marshal(map[string]string{"api_key": key})`
+  - **Line 164**: `credsData, _ := json.Marshal(map[string]string{"username": username, "password": password})`
+  - **Line 189**: `credsData, _ := json.Marshal(map[string]string{"webhook_url": webhookURL})`
+  
+  These `json.Marshal` calls discard errors using blank identifier. While `json.Marshal` on simple `map[string]string` is unlikely to fail, this violates Go best practices and masks potential issues. Should check errors even for simple cases.
+
+#### **CRITICAL: BundledCredentials Error Silently Ignored**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/embed.go`**
+  - **Line 10**: `var BundledCredentials, _ = bundledDefinitions.ReadFile("definitions/gmail_credentials.json")`
+  
+  The `ReadFile` error is discarded. If the embedded file cannot be read, `BundledCredentials` will be `nil`, but no error is reported during package initialization. This can cause silent failures later at runtime when the nil value is accessed.
+
+#### **CRITICAL: Fallback to Original Token on Refresh Failure**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 291-295**:
+    ```go
+    ts := cfg.TokenSource(ctx, token)
+    freshToken, err := ts.Token()
+    if err != nil {
+        freshToken = token // fall back to original if refresh fails
+    }
+    ```
+  
+  If token refresh fails, the code silently falls back to the original token. This could use an expired or invalid token in the verify request. The error is never logged or reported. This is a logic bug - a failed refresh should probably propagate the error or have clearer semantics.
+
+---
+
+### 2. OAUTH FLOW BUGS
+
+#### **ISSUE: Token Refresh Race Condition in Verify**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 291-296**:
+    ```go
+    ts := cfg.TokenSource(ctx, token)
+    freshToken, err := ts.Token()
+    if err != nil {
+        freshToken = token // fall back to original if refresh fails
+    }
+    client := oauth2.NewClient(ctx, ts)
+    ```
+  
+  The code refreshes the token with `ts.Token()`, then creates a client with the same `ts` TokenSource. The `client.Do(req)` call at line 313 may trigger another refresh via the TokenSource, potentially using a different token than `freshToken`. The `freshToken` variable is used for URL substitution but the client will use its own TokenSource. This is a subtle race condition between what gets substituted in the URL vs what the HTTP client actually sends.
+
+#### **ISSUE: No Token Expiry Check Before Verify**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 285-324**
+  
+  After saving the token (line 99-101), the code immediately calls `runVerify()`. There's no check that the token is valid or not expired. If the token is already expired, the refresh at line 292 will fail silently and fall back to the expired token.
+
+---
+
+### 3. SECURITY VULNERABILITIES
+
+#### **HIGH: Credentials Written to Disk in Plaintext**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 130-138** (connectAPIKey)
+  - **Lines 160-167** (connectBasic)
+  - **Lines 185-192** (connectWebhook)
+  
+  All credential types (API keys, usernames/passwords, webhook URLs) are saved as JSON files with mode `0600`. While `0600` restricts file permissions, the credentials are still stored in plaintext. Secrets should be encrypted at rest or use OS-level credential storage (keychain, Windows Credential Manager, etc.). Line 148 also returns the API key in the `Meta` map of the Result, exposing it in memory longer than necessary.
+
+#### **HIGH: OAuth Token Stored in Plaintext**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 94-101**:
+    ```go
+    if err := os.MkdirAll(tokenDir, 0755); err != nil {
+        return nil, fmt.Errorf("creating connector dir: %w", err)
+    }
+    if err := saveToken(tokenPath, token); err != nil {
+        return nil, fmt.Errorf("saving token: %w", err)
+    }
+    ```
+  
+  OAuth tokens (including refresh tokens) are saved in plaintext to disk. The parent directory is created with mode `0755` (world-readable), though the token file itself is `0600`. Still, tokens should be encrypted at rest.
+
+#### **MEDIUM: Credentials Exposed in error.go Response Meta**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 148**: `Meta: map[string]string{"api_key": key}`
+  
+  The API key is returned in the Result's Meta field. This could expose the key if the Result object is logged, serialized, or displayed to users.
+
+#### **MEDIUM: Client Secret Passed to buildOAuthConfig Without Sanitization**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 68-77**
+  
+  Client secrets are read from environment variables and passed to `buildOAuthConfig`. They're stored in the `oauth2.Config` struct which could be logged or serialized. There's no indication that sensitive fields are redacted.
+
+---
+
+### 4. RESOURCE LEAKS
+
+#### **ISSUE: Potential HTTP Response Body Not Fully Drained**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 313-323** (runVerify):
+    ```go
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", err
+    }
+    defer resp.Body.Close()
+    
+    if resp.StatusCode != 200 {
+        return "", fmt.Errorf("verify returned %d", resp.StatusCode)
+    }
+    
+    return extractAccountField(resp.Body, g.def.Verify.AccountFields)
+    ```
+  
+  While `resp.Body.Close()` is deferred, if the status code is not 200, the body is not drained before returning. According to Go best practices, response bodies should be fully read or closed properly to allow connection reuse. However, `defer` will close it eventually, but the connection won't be reused for that HTTP client.
+
+  Similarly in **lines 347-357** (runVerifyAPIKey).
+
+#### **ISSUE: HTTP Response Body Must Be Read for Connection Reuse**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 319-321**: If `resp.StatusCode != 200`, the response body is never read, preventing HTTP connection pooling. The `io.ReadAll()` or full read is missing.
+
+---
+
+### 5. INCONSISTENCIES BETWEEN CONNECTOR IMPLEMENTATIONS
+
+#### **ISSUE: runVerifyAPIKey Uses http.DefaultClient, runVerify Uses oauth2.NewClient**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 296**: `client := oauth2.NewClient(ctx, ts)` (runVerify)
+  - **Line 347**: `resp, err := http.DefaultClient.Do(req)` (runVerifyAPIKey)
+  
+  The OAuth2 verify uses a properly constructed client with token source, but the API key verify uses the global `http.DefaultClient`. This is inconsistent and the `http.DefaultClient` may have timeouts or other issues. Should use a custom client in both cases.
+
+#### **ISSUE: Inconsistent Timeout Handling**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  
+  `runVerify()` and `runVerifyAPIKey()` both create HTTP requests with context, but there's no explicit timeout configured. The context timeout comes from the caller. `OAuthFlow()` has a 120-second timeout (line 16 in oauth.go), but verify calls have no guaranteed timeout.
+
+#### **ISSUE: Error Handling Inconsistency in connectAPIKey vs connectBasic vs connectWebhook**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 117-127**: connectAPIKey checks empty key twice and allows interactive prompting
+  - **Lines 153-158**: connectBasic doesn't allow prompting, just errors
+  - **Lines 173-183**: connectWebhook allows prompting
+  
+  Three different auth types have different error/prompting behavior. This is inconsistent user experience.
+
+---
+
+### 6. YAML PARSING EDGE CASES
+
+#### **ISSUE: No Validation of Scopes Array**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go`**
+  - **Lines 108-115**: OAuth2 validation checks `AuthorizeURL` and `TokenURL`, but doesn't validate that `Scopes` is non-empty
+  
+  An OAuth2 connector could have zero scopes, which would result in an invalid OAuth flow. Add validation: `if len(d.Auth.Scopes) == 0 { return fmt.Errorf("...") }`
+
+#### **ISSUE: No Type Validation**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go`**
+  - **Line 101**: Validates that `Type` is non-empty but doesn't validate it's one of the allowed values (email, crm, enrichment, sequencing, webhook)
+  
+  A malformed YAML could have `type: invalid_type` and wouldn't be caught.
+
+#### **ISSUE: No Validation of auth_style Values**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go`**
+  
+  The `auth_style` field is parsed but never validated. Invalid values like `auth_style: invalid` won't cause an error until runtime at line 210-215 in generic.go.
+
+#### **ISSUE: fallback Field Not Implemented**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go`**
+  - **Line 54**: `Fallback []CredFallback` is defined but never used in the code
+  
+  **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/definitions/gmail.yaml`**
+  - **Lines 24-26**: The fallback configuration is defined but not implemented
+  
+  This is dead code or incomplete feature. Either implement or remove.
+
+---
+
+### 7. LOGIC BUGS
+
+#### **CRITICAL: Lost Access Token After Token Refresh Failure**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 290-297**:
+    ```go
+    ts := cfg.TokenSource(ctx, token)
+    freshToken, err := ts.Token()
+    if err != nil {
+        freshToken = token // fall back to original if refresh fails
+    }
+    client := oauth2.NewClient(ctx, ts)
+    url := strings.ReplaceAll(g.def.Verify.URL, "{{access_token}}", freshToken.AccessToken)
+    ```
+  
+  If `freshToken.AccessToken` is empty (e.g., never populated properly), the URL will have `{{access_token}}` literally replaced with empty string, creating a malformed URL. There's no check that `freshToken.AccessToken` is non-empty.
+
+#### **ISSUE: Category/Type Ordering May Fail Silently**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/registry.go`**
+  - **Lines 80-92**: The sorting code references a `typeOrder` map. If a connector has a type not in this map, it will sort with the zero value (0), potentially placing it first.
+  
+  ```go
+  typeOrder := map[string]int{"email": 0, "crm": 1, ...}
+  ...
+  oi := typeOrder[result[i].Type]
+  ```
+  
+  If a YAML defines `type: unknown_type`, it gets `oi = 0` (zero value), appearing first. Should use a default or error on unknown types.
+
+#### **ISSUE: Directory Creation Mode 0755 Is World-Readable**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 96, 131, 161, 186**: `os.MkdirAll(tokenDir, 0755)`
+  
+  The directory is world-readable. While the files inside are 0600, the directory structure itself is exposed. Should use `0700` to restrict directory access.
+
+---
+
+### 8. UNUSED/DEAD CODE
+
+#### **ISSUE: LoadCredentials Function Appears Unused**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/credentials.go`**
+  - **Lines 13-27**: The `LoadCredentials()` function exists but based on grep, only `internal/email/client.go` uses it for Gmail
+  
+  The code is not fully used by the connector package itself. Check if this is migration code that should be removed.
+
+#### **ISSUE: Fallback Chain in CredConfig Not Implemented**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go`**
+  - **Line 54**: `Fallback []CredFallback` is parsed but never used
+  
+  The YAML supports a fallback chain for credentials but the code doesn't implement it. Either implement or remove.
+
+---
+
+### 9. CONCURRENCY/RACE CONDITIONS
+
+#### **ISSUE: Global http.DefaultClient**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 347**: `http.DefaultClient.Do(req)`
+  
+  The global default client is not safe for use if multiple goroutines are calling this concurrently with different timeouts/configurations. Should create a custom client.
+
+#### **ISSUE: TokenSource Shared Between URL Substitution and Client**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 291-313**: The TokenSource `ts` is used to get `freshToken` for URL substitution, but then a client is created with the same `ts`. The client's HTTP call may trigger another token refresh, causing the actual token sent to differ from what was substituted in the URL.
+
+---
+
+### 10. INPUT VALIDATION
+
+#### **ISSUE: No Validation of ENV Variables and Field Names**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 117, 153, 154, 173, 232, 233**: Environment variable names are read from YAML config without validation
+  
+  A malformed config could reference env vars that don't exist, causing failures at runtime instead of configuration time.
+
+#### **ISSUE: Verify.URL String Replacement Is Naive**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Lines 297, 309, 332**: Uses `strings.ReplaceAll()` for template substitution
+  
+  If the token/key contains `{{access_token}}`, it would be replaced in the token value itself. Should use proper template substitution or URL encoding.
+
+---
+
+### 11. SCANNER INPUT ISSUES
+
+#### **ISSUE: fmt.Scanln with API Key/Secret Is Insecure**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`**
+  - **Line 122**: `fmt.Scanln(&key)` for API key
+  - **Line 246, 248**: `fmt.Scanln(&id)` and `fmt.Scanln(&secret)` for OAuth credentials
+  
+  `fmt.Scanln` reads from stdin and the input is visible to other processes (ps commands). Secrets should use proper TTY input masking (Go has `golang.org/x/term/ReadPassword` for this). The comments even acknowledge this is interactive (line 119-120).
+
+---
+
+### 12. CONTEXT HANDLING
+
+#### **ISSUE: Timeout Not Applied to OAuth Callback Handler**
+- **File: `/Users/rejoesudarsan/Projects/nurgesh/internal/util/callbackserver.go`**
+  - **Lines 49-52**: Timeout is implemented as a separate goroutine
+  
+  While the timeout is implemented, if the user takes too long to complete OAuth, the callback handler still receives the request but sends an error. However, once the timeout goroutine fires, `server.Close()` is called, which abruptly closes the server. This could leave the handler goroutine in a bad state. Better to use `server.Shutdown()` with context timeout.
+
+---
+
+### SUMMARY TABLE
+
+| Severity | Category | File | Line(s) | Issue |
+|----------|----------|------|---------|-------|
+| CRITICAL | Error Handling | generic.go | 135, 164, 189 | json.Marshal errors ignored |
+| CRITICAL | Error Handling | embed.go | 10 | BundledCredentials read error ignored |
+| CRITICAL | OAuth Logic | generic.go | 291-295 | Token refresh failure silent fallback |
+| HIGH | Security | generic.go | 130-192 | Credentials in plaintext |
+| HIGH | Security | generic.go | 94-101 | OAuth tokens in plaintext |
+| MEDIUM | Security | generic.go | 148 | API key exposed in Result.Meta |
+| MEDIUM | Resource Leak | generic.go | 319-321 | Response body not drained on error |
+| MEDIUM | Inconsistency | generic.go | 296 vs 347 | Different HTTP clients used |
+| MEDIUM | YAML | yaml.go | 108-115 | No Scopes validation |
+| MEDIUM | YAML | yaml.go | 101 | No Type value validation |
+| MEDIUM | Logic | registry.go | 80-92 | Unknown type sorts incorrectly |
+| MEDIUM | Directory Mode | generic.go | 96,131,161,186 | 0755 is world-readable |
+| LOW | Input Validation | generic.go | 297, 309, 332 | Naive template substitution |
+| LOW | Input Security | generic.go | 122, 246, 248 | Secrets via visible stdin |
+| LOW | Dead Code | yaml.go | 54 | Unused Fallback field |</result>
+<usage><total_tokens>52687</total_tokens><tool_uses>48</tool_uses><duration_ms>155639</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/adcb9baa304d9c7cb.output
+
+---
+
+<task-notification>
+<task-id>aab136ac4e98a10e3</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/aab136ac4e98a10e3.output</output-file>
+<status>completed</status>
+<summary>Agent "Find dead code and unused deps" completed</summary>
+<result>Now let me create a final comprehensive report based on my findings.
+
+## DEAD CODE AND OVER-ENGINEERING ANALYSIS REPORT
+
+### Overview
+Analyzed `/Users/rejoesudarsan/Projects/nurgesh` codebase with 189 Go files (~27,175 lines) and identified several instances of dead code, unused exports, over-engineering patterns, and infrastructure code that's no longer functional.
+
+---
+
+## 1. UNUSED EXPORTED FUNCTIONS
+
+### **FetchSECEdgar() - NEVER CALLED**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/freeapis.go:217-310`
+
+This public function is defined but has zero callers across the entire codebase. The function is designed to fetch SEC EDGAR filings for public companies but is never invoked anywhere.
+
+- **Function**: `FetchSECEdgar(company string) (*SECCompany, error)`
+- **Related Types**: `SECCompany` (lines 210-215), `SECFiling` (lines 200-208)
+- **Status**: Dead code - removable without impact
+
+---
+
+### **DefaultRegistry() - DEPRECATED BUT STILL EXPORTED**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/registry.go:97-102`
+
+```go
+// Deprecated: use LoadRegistry("") for bundled-only, or LoadRegistry(projectDir) for full.
+func DefaultRegistry() []ConnectorDef {
+	defs, _ := LoadRegistry("")
+	return defs
+}
+```
+
+- **Status**: Explicitly marked deprecated but still exported
+- **Actual Usage**: Zero references in codebase
+- **Recommendation**: Remove or replace with direct `LoadRegistry("")` calls if needed
+
+---
+
+## 2. UNUSED TYPES AND DATA STRUCTURES
+
+### **SEC-Related Types (ORPHANED)**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/freeapis.go`
+
+- `SECFiling` (lines 200-208): Only defined, never used
+- `SECCompany` (lines 210-215): Only defined, never used
+
+These types exist only to support the unused `FetchSECEdgar()` function.
+
+### **Empty Placeholder File System**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/embed.go:10`
+
+```go
+var bundledProviders fs.FS = emptyFS{}
+
+type emptyFS struct{}
+```
+
+**Context**: Lines 5-9 explain that bundled providers (apify-linkedin-company.yaml, apify-linkedin-person.yaml, apollo-email.yaml) were intentionally removed as dead code. The `bundledProviders` variable still exists but returns `ErrNotExist` for all operations.
+
+**Impact**: This is leftover infrastructure from a deleted feature. The empty FS is harmless but represents technical debt.
+
+---
+
+## 3. INFRASTRUCTURE SUPPORTING DEAD CODE
+
+### **DefaultWaterfall - EMPTY MAP**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/waterfall.go:14`
+
+```go
+// Previously referenced apify-linkedin-person, apify-linkedin-company, and
+// apollo-email, but those providers were dead code (API calls were stubbed,
+// never made real HTTP requests). Enrichment now uses Convex/Unipile...
+//
+// User-defined providers from .nurge/providers/ can still populate this map
+// if the waterfall-based enrichment is reactivated in the future.
+var DefaultWaterfall = map[string][]string{}
+```
+
+**Analysis**:
+- Defined globally but always empty at runtime
+- Functions `AllEnrichableFields()` and `WaterfallForField()` exist but return either fixed hardcoded lists or nil when called with any field
+- The waterfall provider system is designed for future extensibility but is currently non-functional
+- No CLI commands or integrations use this waterfall system; enrichment now uses Convex/Unipile instead
+
+---
+
+## 4. REGISTRY METHODS WITH LIMITED/TEST-ONLY USAGE
+
+### **ProviderRegistry.All() and .Count()**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/provider.go:108-119`
+
+```go
+func (r *ProviderRegistry) All() map[string]Provider { ... }  // Never called
+func (r *ProviderRegistry) Count() int { ... }  // Used once in tests + once for metrics
+```
+
+**Usage**:
+- `.Count()`: Used in `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/provider_test.go:14-15` (tests only) and `/Users/rejoesudarsan/Projects/nurgesh/cmd/root.go:253` (metrics logging)
+- `.All()`: Zero callers - completely unused
+
+**Assessment**: `.All()` is dead code. `.Count()` has minimal real usage (only for metrics). These methods exist to support the empty provider registry system.
+
+---
+
+## 5. DEPRECATED/MIGRATION-IN-PROGRESS CODE
+
+### **BundledCredentials - BACKWARDS COMPATIBILITY VARIABLE**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/embed.go:8-10`
+
+```go
+// BundledCredentials provides backward-compatible access to Gmail credentials.
+// Used by internal/email/client.go until LoadCredentials() migration is complete.
+var BundledCredentials, _ = bundledDefinitions.ReadFile("definitions/gmail_credentials.json")
+```
+
+**Status**: Explicitly transitional code waiting for migration completion. This indicates incomplete refactoring.
+
+**Check**: Need to verify if this is actually used in `internal/email/client.go`
+
+---
+
+## 6. UNUSED PROVIDER INFRASTRUCTURE
+
+The entire enrichment provider system (`internal/enrich/provider.go`) supports a feature that is now defunct:
+
+- **ProviderRegistry struct** and methods load YAML provider definitions
+- **LoadProviders()** function scans for provider YAML files in bundled and user directories
+- But `DefaultWaterfall` map is empty, so providers can't be used in the waterfall system
+- Users can define providers in `.nurge/providers/` but they're never actually invoked by any code path
+
+This is over-engineering: the infrastructure exists to support a feature (customizable provider waterfalls) that is not actually used.
+
+---
+
+## 7. UNUSED/RARELY-USED EXPORTS IN go.mod DEPENDENCIES
+
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/go.mod`
+
+All declared dependencies ARE used:
+- `github.com/spf13/cobra` - Used throughout cmd/ package
+- `golang.org/x/oauth2` - Used in connector authentication
+- `google.golang.org/api` - Used for Gmail API
+- `modernc.org/sqlite` - Used for database
+
+No unused dependencies detected.
+
+---
+
+## 8. COMMENTED-OUT CODE BLOCKS
+
+### **Strategic Memory Code with Comments About Dead Code**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/waterfall.go:5-13`
+
+Large explanatory comment block describing removed dead code:
+
+```go
+// Previously referenced apify-linkedin-person, apify-linkedin-company, and
+// apollo-email, but those providers were dead code (API calls were stubbed,
+// never made real HTTP requests). Enrichment now uses Convex/Unipile via
+// `nurge enrich company` and `nurge enrich person` subcommands.
+```
+
+This comment is informative but indicates a past cleanup that left infrastructure behind.
+
+---
+
+## 9. OVER-ENGINEERING PATTERNS
+
+### **Pattern 1: Wrapper Types with Single Implementation**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/connector.go`
+
+```go
+type Connector interface {
+	ID() string
+	Name() string
+	Type() string
+	Connect(ctx context.Context) (*Result, error)
+}
+```
+
+**Analysis**: 
+- Only one implementation: `GenericConnector` in `connector/generic.go`
+- NewFromDef() factory function creates it (line 36-38)
+- This is reasonable for extensibility but worth noting
+
+### **Pattern 2: Provider Registry for Empty System**
+**File**: `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/provider.go`
+
+The `ProviderRegistry` class hierarchy with methods like `GetProvider()`, `ProvidersForField()`, `All()`, `Count()` is abstract infrastructure for a system that doesn't work (empty DefaultWaterfall).
+
+---
+
+## 10. SUMMARY OF FINDINGS
+
+| Category | Finding | Severity | Location |
+|----------|---------|----------|----------|
+| **Dead Code** | `FetchSECEdgar()` never called | HIGH | `internal/enrich/freeapis.go:217` |
+| **Orphaned Types** | `SECCompany`, `SECFiling` | MEDIUM | `internal/enrich/freeapis.go:200-215` |
+| **Unused Export** | `DefaultRegistry()` deprecated | MEDIUM | `internal/connector/registry.go:99` |
+| **Unused Methods** | `ProviderRegistry.All()` | LOW | `internal/enrich/provider.go:109` |
+| **Empty Infrastructure** | `bundledProviders` empty FS | MEDIUM | `internal/enrich/embed.go:10` |
+| **Empty Data** | `DefaultWaterfall` map | MEDIUM | `internal/enrich/waterfall.go:14` |
+| **Migration Debt** | `BundledCredentials` transition flag | LOW | `internal/connector/embed.go:10` |
+| **Over-engineering** | Provider system for non-functional feature | MEDIUM | `internal/enrich/provider.go` |
+
+---
+
+## RECOMMENDATIONS
+
+1. **Remove immediately** (no risk):
+   - `FetchSECEdgar()` function and related types
+   - `DefaultRegistry()` function
+   - `ProviderRegistry.All()` method
+
+2. **Clean up infrastructure**:
+   - Replace `emptyFS` with proper comments if keeping for historical reference
+   - Either activate the DefaultWaterfall system properly or remove the Provider infrastructure entirely
+   - Complete the `BundledCredentials` migration or document why it's permanent
+
+3. **Documentation**:
+   - Document why the provider system is being kept (extensibility for future?)
+   - Add todo/fixme comments if these are intentional technical debt
+
+4. **No issues found**:
+   - Go.mod is clean - all dependencies are used
+   - No blank imports detected
+   - No missing error handling patterns
+   - Blank imports intentional (like `_ "modernc.org/sqlite"` for side effects)</result>
+<usage><total_tokens>78389</total_tokens><tool_uses>57</tool_uses><duration_ms>188601</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/aab136ac4e98a10e3.output
+
+---
+
+<task-notification>
+<task-id>a16f8ec8f4875c72f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a16f8ec8f4875c72f.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze internal/auth+config+other" completed</summary>
+<result>Now let me prepare a comprehensive code review report:
+
+## COMPREHENSIVE CODE REVIEW REPORT
+
+Based on my thorough review of the specified Go packages in `/Users/rejoesudarsan/Projects/nurgesh`, I've identified multiple bugs, security issues, and design problems. Here's the detailed report:
+
+---
+
+## CRITICAL ISSUES
+
+### 1. **ERROR HANDLING - Ignored JSON Marshal Errors (convex.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/convex.go:87, 120`
+
+**Issue:** json.Marshal errors are silently ignored with blank identifier `_`
+
+```go
+// Line 87
+body, _ := json.Marshal(map[string]string{"code": code})
+
+// Line 120  
+body, _ := json.Marshal(map[string]string{"token": token})
+```
+
+**Problem:** While the chance of json.Marshal failing on a simple map is low, ignoring errors is a bad practice and could hide issues if the payload becomes complex. This violates Go's error handling conventions.
+
+**Impact:** Silent failures if marshaling fails (unlikely but possible with custom types)
+
+---
+
+### 2. **ERROR HANDLING - Ignored JSON Unmarshal (convex.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/convex.go:107`
+
+**Issue:** json.Unmarshal error is ignored when parsing error response
+
+```go
+// Lines 103-108
+if resp.StatusCode != 200 {
+    var errResp struct {
+        Error string `json:"error"`
+    }
+    json.Unmarshal(data, &errResp)  // ERROR IGNORED
+    return nil, fmt.Errorf("exchange failed: %s", errResp.Error)
+}
+```
+
+**Problem:** If response body is malformed JSON, errResp.Error remains empty (""). The error message returned to user will be "exchange failed: " with no helpful information, making debugging impossible.
+
+**Impact:** Poor error messages to users, hidden parse failures
+
+---
+
+### 3. **ERROR HANDLING - Ignored Time Parse (auth.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/auth.go:29, 56`
+
+**Issue:** time.Parse errors are ignored with blank identifier
+
+```go
+// Lines 29, 56
+validatedAt, _ := time.Parse(time.RFC3339, af.ValidatedAt)
+```
+
+**Problem:** If ValidatedAt contains invalid RFC3339 string, validatedAt will be zero time (1970-01-01), causing cache TTL logic to be incorrect. The grace period check will incorrectly use zero time.
+
+**Impact:** Broken cache/grace period logic if auth file is corrupted
+
+**Root Cause:** af.ValidatedAt could be set to empty string or invalid format, leading to silent parsing failures
+
+---
+
+### 4. **RACE CONDITION - Callback Channel Send After Server Close (callbackserver.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/callbackserver/callbackserver.go:30-52`
+
+**Issue:** Multiple goroutines can send on channels after they're closed
+
+```go
+// Lines 30-39: HTTP handler can send on rCh or eCh
+mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+    // ...
+    rCh <- Result{Values: r.URL.Query()}  // Send
+})
+
+// Lines 49-52: Timeout goroutine sends on eCh and closes server
+go func() {
+    <-time.After(timeout)
+    eCh <- fmt.Errorf("timed out after %s", timeout)  // Send
+    server.Close()  // Close server
+}()
+```
+
+**Problem:** 
+1. If timeout fires first, server.Close() is called
+2. But HTTP handler might still receive a request
+3. Handler tries to send on eCh <- but that channel is NOT closed, only the server is
+4. If both timeout and HTTP handler fire simultaneously, two goroutines race to send on same channel
+5. If HTTP handler sends after cleanup() calls server.Close(), panic possible
+
+**Scenario:** 
+- Request arrives just as timeout fires
+- Timeout goroutine sends on eCh and closes server
+- HTTP handler's write to rCh or eCh happens after timeout
+- Race condition occurs
+
+**Impact:** Potential panic, data loss, or deadlock
+
+**Fix needed:** Close channels in cleanup function, use sync.Once for cleanup, or add channel closure guards
+
+---
+
+### 5. **DATA LOSS - File Written After Commit But Rollback Possible (learning.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/learning/learning.go:187-240`
+
+**Issue:** File write happens AFTER transaction commit, but if write fails, DB is already committed
+
+```go
+// Lines 225-240
+if err := tx.Commit(); err != nil {  // Line 225 - DB commit succeeds
+    return fmt.Errorf("committing transaction: %w", err)
+}
+
+// Write to disk AFTER commit
+skillDir := filepath.Join(".claude", "skills", skillName)
+if err := os.MkdirAll(skillDir, 0755); err != nil {  // Line 231 - Write fails here
+    return fmt.Errorf("creating skill directory: %w", err)
+}
+```
+
+**Problem:** DB transaction is committed before file system operations. If file write fails:
+- DB has the new skill version marked as active
+- But SKILL.md file doesn't exist or wasn't updated
+- System is in inconsistent state
+- Client reads from DB but finds no file on disk
+
+**Impact:** Data inconsistency, corruption of skill state
+
+**Fix needed:** Move file writes into transaction, or use rollback on file write failure
+
+---
+
+### 6. **SECURITY - Ignored Error in RevokeToken (convex.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/convex.go:120`
+
+**Issue:** json.Marshal error silently ignored in RevokeToken
+
+```go
+// Line 120
+body, _ := json.Marshal(map[string]string{"token": token})
+```
+
+**Problem:** Same as issue #1, but in logout path. Could fail silently when revoking token.
+
+---
+
+### 7. **UNHANDLED ERROR - Missing Error Check in SaveAuth Call (auth.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/auth.go:44`
+
+**Issue:** SaveAuth error is explicitly ignored with comment "best effort"
+
+```go
+// Line 44
+SaveAuth(af) // best effort
+```
+
+**Problem:** While marked intentionally, if SaveAuth fails, the user is never informed. The cache won't be updated, so next login validation will be slower. Better to at least log to stderr.
+
+**Impact:** Silent failures in cache updates, degraded performance, user unaware of issues
+
+---
+
+## HIGH SEVERITY ISSUES
+
+### 8. **RACE CONDITION - File System Race in Config Functions (config.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/config/config.go:73-120`
+
+**Issue:** Load-modify-write pattern without locking
+
+```go
+// Lines 73-84
+func SetConnector(id, connType, account string) error {
+    cfg, err := Load()  // Read from disk
+    if err != nil {
+        return err
+    }
+    cfg.Connectors[id] = ConnectorState{...}  // Modify in memory
+    return Write(cfg)  // Write to disk
+}
+
+// Lines 110-120  
+func Set(key, value string) error {
+    cfg, err := Load()  // Read from disk
+    if err != nil {
+        return err
+    }
+    cfg.Settings[key] = value  // Modify in memory
+    return Write(cfg)  // Write to disk
+}
+```
+
+**Problem:** If two processes call Set or SetConnector simultaneously:
+1. Process A reads config.json
+2. Process B reads config.json (gets same content)
+3. Process A modifies and writes (update 1)
+4. Process B modifies and writes (update 2)
+5. Process A's changes are lost (lost update)
+
+**Impact:** Lost configuration changes in concurrent scenarios
+
+**Fix needed:** File locking, mutex, or atomic write operations
+
+---
+
+### 9. **EDGE CASE - Empty Domain in Suppression Check (resolve.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go:942-955`
+
+**Issue:** Empty domain is passed to suppression check
+
+```go
+// Lines 942-947
+func isSuppressed(d *sql.DB, email, domain string) (bool, error) {
+    var dummy int
+    err := d.QueryRow(`
+        SELECT 1 FROM suppressions
+        WHERE (scope='email' AND value=?) OR (scope='domain' AND value=?)
+        LIMIT 1`, strings.ToLower(email), strings.ToLower(domain)).Scan(&dummy)
+```
+
+**Problem:** This is called with domain="" in multiple places:
+- Line 318: `isSuppressed(d, email, domain)` where domain could be ""
+- Lines 299-305: domain is initialized to "" and might stay ""
+
+The SQL query will match rows where domain="" which likely isn't intended. This could suppress contacts incorrectly.
+
+**Impact:** Incorrect suppression of contacts, data loss
+
+---
+
+### 10. **POTENTIAL SQL INJECTION-like Issue - LIKE Pattern (resolve.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go:504, 520, 539`
+
+**Issue:** LIKE pattern used with placeholder email
+
+```go
+// Line 504
+d.QueryRow(`SELECT COUNT(*) FROM contacts WHERE email LIKE '_noemail_%'`).Scan(&count)
+
+// Lines 520, 539  
+email LIKE '_noemail_%'
+```
+
+**Problem:** While using parameterized queries is correct, the pattern `_noemail_%` uses SQL wildcards:
+- `_` matches any single character
+- `%` matches any characters
+- `placeholderEmail(id)` returns `_noemail_` + UUID
+
+So email like `_noemail_contact_abc123` will match pattern `_noemail_%` correctly. However, this is brittle - if someone's real email accidentally starts with `_noemail_`, it would be misidentified as placeholder.
+
+**Impact:** Misidentification of emails as placeholders (low risk but bad design)
+
+**Better approach:** Add explicit column flag is_placeholder or use actual prefix match in application code
+
+---
+
+## MEDIUM SEVERITY ISSUES
+
+### 11. **RESOURCE LEAK - Listener Not Closed on Error (callbackserver.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/callbackserver/callbackserver.go:19-24`
+
+**Issue:** If error occurs after listener creation, listener isn't closed
+
+```go
+// Lines 20-24
+listener, err := net.Listen("tcp", "localhost:0")
+if err != nil {
+    return 0, nil, nil, nil, fmt.Errorf("finding free port: %w", err)
+}
+port = listener.Addr().(*net.TCPAddr).Port
+```
+
+**Problem:** This specific case is unlikely (net.Listen rarely fails), but if it does, the listener is leaking. After server.Serve(listener) on line 42, server owns the listener, but explicit listener.Close() should be considered for the error path.
+
+**Impact:** Resource leak (minor, as this is rare)
+
+---
+
+### 12. **LOGIC ERROR - Invalid Email Format Not Caught in CSV (resolve.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go:275-278`
+
+**Issue:** Email validation in CSV is basic
+
+```go
+// Lines 275-278
+email := strings.ToLower(strings.TrimSpace(colVal(record, colMap, "email")))
+if email != "" && !looksLikeEmail(email) {
+    result.Skipped = append(result.Skipped, SkippedEntry{Input: email, Reason: "invalid_email"})
+    continue
+}
+```
+
+**Problem:** `looksLikeEmail` uses `mail.ParseAddress` which is permissive. For example:
+- `user@` (no domain) fails correctly
+- `@domain.com` (no user) fails correctly
+- But `user name@domain.com` passes because mail.ParseAddress allows display names
+
+This might allow invalid emails into contacts.
+
+**Impact:** Invalid emails might be stored, causing failures downstream
+
+**Fix:** Use stricter email validation or RFC 5321 parsing
+
+---
+
+### 13. **LOGIC ERROR - Duplicate Dedup Keys Not Handled (resolve.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go:330-340`
+
+**Issue:** Within-CSV dedup only uses first matching key
+
+```go
+// Lines 335-340
+var matchID string
+for _, k := range keys {
+    if id, ok := dedupMap[k]; ok {
+        matchID = id
+        break  // Only uses FIRST match
+    }
+}
+```
+
+**Problem:** If a CSV has two rows with:
+- Row 1: email A, LinkedIn L1, name N1
+- Row 2: email A, LinkedIn L2, name N1
+
+Row 1 creates contact with keys: `[email:A, li:L1, ...]`
+Row 2 matches on email:A key, merges into same contact
+
+But this hides the fact that L2 is different from L1. A contact shouldn't have two LinkedIn URLs. This could cause data corruption.
+
+**Impact:** Data corruption - multiple LinkedIn URLs merged into one contact incorrectly
+
+---
+
+### 14. **TIMEZONE HANDLING - No Validation (auth.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/auth.go:29, 56`
+
+**Issue:** ValidatedAt could be invalid format
+
+The time.Parse will silently fail and use zero time. Combined with issue #3, this is critical.
+
+---
+
+## LOW SEVERITY ISSUES
+
+### 15. **EDGE CASE - Empty CSV File (resolve.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go:219-234`
+
+**Issue:** Empty CSV or header-only CSV not handled gracefully
+
+```go
+// Lines 226-234
+reader := csv.NewReader(f)
+header, err := reader.Read()
+if err != nil {
+    return nil, fmt.Errorf("reading CSV header: %w", err)
+}
+colMap := buildColumnMap(header)
+```
+
+**Problem:** If CSV is empty (io.EOF), ReadAll returns error, which is good. But if CSV has only header and no rows, the function will return success with 0 contacts. The summary says "CSV import: no contacts resolved" but doesn't indicate if this was an error or intended.
+
+**Impact:** Confusing user experience
+
+---
+
+### 16. **INCONSISTENT ERROR MESSAGES - Typo in Logout (auth.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/auth/auth.go:135`
+
+**Issue:** Generic error message when auth file missing
+
+```go
+// Line 135
+return fmt.Errorf("not logged in")
+```
+
+**Problem:** This hides the actual error (file not found). Should be:
+```go
+return fmt.Errorf("not logged in: %w", err)
+```
+
+**Impact:** Obscured error information
+
+---
+
+### 17. **CODE DUPLICATION - Identical Functions (browser.go, util/browser.go)**
+
+**Location:** 
+- `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/browser/browser.go`
+- `/Users/rejoesudarsan/Projects/nurgesh/internal/util/browser.go`
+
+**Issue:** Open() function is duplicated identically in two packages
+
+**Impact:** Maintenance burden, inconsistency if one is fixed and other isn't
+
+---
+
+### 18. **DESIGN - No Path Validation (learning.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/learning/learning.go:230-237`
+
+**Issue:** skillName is used directly in filepath.Join without sanitization
+
+```go
+// Line 230
+skillDir := filepath.Join(".claude", "skills", skillName)
+```
+
+**Problem:** If skillName contains "..", ".", or path separators:
+- `skillName = "../../../etc/passwd"` would write to `/etc/passwd`
+- `skillName = "..\\..\\windows\\system32"` on Windows
+
+**Impact:** Path traversal vulnerability
+
+**Fix:** Validate skillName against path traversal patterns
+
+---
+
+### 19. **MISSING CLEANUP - Channels Not Closed (callbackserver.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/callbackserver/callbackserver.go:44-46`
+
+**Issue:** Channels are never explicitly closed
+
+```go
+// Lines 26-27
+rCh := make(chan Result, 1)
+eCh := make(chan error, 1)
+
+// Lines 44-46
+cleanupFn := func() {
+    server.Close()
+    // rCh and eCh are NOT closed
+}
+```
+
+**Problem:** If caller doesn't fully drain channels before cleanup, the channels remain open. If goroutines try to send after cleanup, they block or panic.
+
+**Impact:** Potential deadlock or panic if cleanup called before channels fully drained
+
+---
+
+### 20. **INCONSISTENT STATE - Config File Permissions (config.go)**
+
+**Location:** `/Users/rejoesudarsan/Projects/nurgesh/.worktrees/cli-auth/internal/config/config.go:66`
+
+**Issue:** Config file written with 0644 permissions
+
+```go
+// Line 66
+if err := os.WriteFile(configFile, data, 0644); err != nil {
+```
+
+**Problem:** 
+- Config contains connector state (potentially sensitive OAuth metadata)
+- Should use restrictive permissions like 0600
+- Compare to auth.go which correctly uses 0600 (line 70 in token.go)
+
+**Impact:** Weak file permissions expose configuration to other users on shared systems
+
+---
+
+## SUMMARY TABLE
+
+| # | File | Line(s) | Severity | Issue | Type |
+|---|------|---------|----------|-------|------|
+| 1 | convex.go | 87, 120 | CRITICAL | Ignored json.Marshal errors | Error Handling |
+| 2 | convex.go | 107 | CRITICAL | Ignored json.Unmarshal error | Error Handling |
+| 3 | auth.go | 29, 56 | CRITICAL | Ignored time.Parse errors | Error Handling |
+| 4 | callbackserver.go | 30-52 | CRITICAL | Race condition on channel send | Concurrency |
+| 5 | learning.go | 225-240 | CRITICAL | DB commit before file write | Data Integrity |
+| 6 | convex.go | 120 | HIGH | Ignored json.Marshal in RevokeToken | Error Handling |
+| 7 | auth.go | 44 | HIGH | Silent SaveAuth failure | Error Handling |
+| 8 | config.go | 73-120 | HIGH | TOCTOU race in Get/Set | Concurrency |
+| 9 | resolve.go | 942-955 | HIGH | Empty domain in suppression | Logic |
+| 10 | resolve.go | 520, 539 | HIGH | Brittle LIKE pattern | Design |
+| 11 | callbackserver.go | 19-24 | MEDIUM | Listener not closed on error | Resource |
+| 12 | resolve.go | 275-278 | MEDIUM | Permissive email validation | Logic |
+| 13 | resolve.go | 335-340 | MEDIUM | Dedup only uses first key | Logic |
+| 14 | auth.go | 29, 56 | MEDIUM | Timezone handling issues | Edge Case |
+| 15 | resolve.go | 226-234 | LOW | Empty CSV not handled | Edge Case |
+| 16 | auth.go | 135 | LOW | Generic logout error | UX |
+| 17 | browser.go files | - | LOW | Duplicate functions | Duplication |
+| 18 | learning.go | 230 | MEDIUM | Path traversal vulnerability | Security |
+| 19 | callbackserver.go | 44-46 | MEDIUM | Channels not closed | Resource |
+| 20 | config.go | 66 | MEDIUM | Weak file permissions | Security |</result>
+<usage><total_tokens>77626</total_tokens><tool_uses>47</tool_uses><duration_ms>204410</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a16f8ec8f4875c72f.output
+
+---
+
+yes
+
+---
+
+<task-notification>
+<task-id>af56c9a28a5d0cc14</task-id>
+<tool-use-id>toolu_01J3WVVXyxHSEdxTnHBuQWYu</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af56c9a28a5d0cc14.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix path traversal in learning.go" completed</summary>
+<result>Clean compile, no errors. Here is a summary of what was done:
+
+**File modified:** `/Users/rejoesudarsan/Projects/nurgesh/internal/session/learning.go`
+
+**Fix 1 -- Path traversal vulnerability:**
+- Added `validateSkillName()` function that rejects skill names containing `..`, `/`, or `\`, and rejects empty names.
+- Added a secondary defense in `writeSkillToDisk()` that resolves the absolute path and verifies it stays within `.claude/skills/` via a `strings.HasPrefix` check. This guards against any edge cases the character-level check might miss.
+- Added `"strings"` import.
+
+**Fix 2 -- DB-commit-before-file-write ordering:**
+- In `SaveSkillVersion()`: moved `writeSkillToDisk()` call to happen **before** `tx.Commit()`. If the file write fails, the deferred `tx.Rollback()` unwinds the DB changes.
+- In `RollbackSkill()`: same reordering -- `writeSkillToDisk()` now runs before `tx.Commit()`.
+
+Both functions now follow the pattern: DB operations in transaction, file write, then commit. If anything before commit fails, the deferred rollback cleans up the transaction.</result>
+<usage><total_tokens>22583</total_tokens><tool_uses>11</tool_uses><duration_ms>71823</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af56c9a28a5d0cc14.output
+
+---
+
+<task-notification>
+<task-id>af70ad8f61d13a439</task-id>
+<tool-use-id>toolu_011tqBUAK5UvVCuQ1oBAtxAu</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af70ad8f61d13a439.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix callback server race condition" completed</summary>
+<result>Here is a summary of what was done:
+
+**File fixed:** `/Users/rejoesudarsan/Projects/nurgesh/internal/util/callbackserver.go`
+
+**Changes made:**
+
+1. **`sync.Once` for channel sends** -- A single `once` variable guards all three send paths (callback success on `rCh`, callback error on `eCh`, timeout error on `eCh`). Whichever fires first wins; the others become no-ops. This eliminates the race where both the timeout goroutine and the HTTP handler could send on `eCh` simultaneously.
+
+2. **`sync.Once` for cleanup** -- The `cleanupFn` is now wrapped in a separate `cleanupOnce` so it is safe to call multiple times (the timeout goroutine calls it, and the caller may also call it). `server.Close()` only executes once.
+
+3. **API signature preserved** -- The function signature, return types, and channel buffer sizes (1) are all unchanged. Callers need no modifications.
+
+**Duplicate file noted:** `.worktrees/cli-auth/internal/callbackserver/callbackserver.go` is a copy of the same code in a git worktree (different package name `callbackserver` vs `util`). It is not imported by the main branch's code -- it lives in the `cli-auth` worktree. The fix was applied only to the active file in `internal/util/`. If that worktree code is merged later, the same fix should be applied there.</result>
+<usage><total_tokens>20434</total_tokens><tool_uses>11</tool_uses><duration_ms>65905</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af70ad8f61d13a439.output
+
+---
+
+<task-notification>
+<task-id>af6e34153d157c4bd</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af6e34153d157c4bd.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix resolve.go logic bugs" completed</summary>
+<result>All 26 tests pass. Here is a summary of the two fixes:
+
+**Fix 1: `isSuppressed` empty domain match** (`/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go`, line ~942)
+
+The function now branches on whether `domain` is empty. When domain is `""`, the SQL query only checks `scope='email'`, avoiding a false match against suppression rows that happen to have `value=""`. When domain is non-empty, it checks both email and domain scopes as before.
+
+**Fix 2: `looksLikeEmail` permissive validation** (`/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve.go`, line ~747)
+
+The function now performs three checks before falling through to `mail.ParseAddress`:
+1. Rejects strings containing whitespace (spaces, tabs, newlines) -- this blocks display names like `"John Doe" <john@example.com>`
+2. Requires exactly one `@` with non-empty local and domain parts
+3. Requires the domain part to contain at least one dot (rules out `user@localhost`)</result>
+<usage><total_tokens>18224</total_tokens><tool_uses>9</tool_uses><duration_ms>55045</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/af6e34153d157c4bd.output
+
+---
+
+<task-notification>
+<task-id>a7307cecf2791279e</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a7307cecf2791279e.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix table injection in sync.go" completed</summary>
+<result>All three fixes are applied and compiling cleanly. Here is a summary of what was done:
+
+**Fix 1: SQL injection in `upsertRow`** (`/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`)
+- Added an `allowedTables` map built from the existing `executionTables` whitelist at init time.
+- Added `validateTableName()` that checks `row.Table` against the whitelist before it gets interpolated into SQL. Returns an error for unrecognized tables.
+- Added `validateColumnName()` with a regex check (`^[a-zA-Z_][a-zA-Z0-9_]*$`) to ensure column names from `row.Data` are safe SQL identifiers, since those keys also come from the external API and are interpolated into the `SET` clause.
+- Both validations run in `upsertRow` before the `fmt.Sprintf` that builds the query.
+
+**Fix 2: Ignored `d.Exec()` error for sync cursor** (`/Users/rejoesudarsan/Projects/nurgesh/cmd/sync.go`, line 76)
+- Changed `d.Exec(...)` to `_, err = d.Exec(...)` and added an error check that returns `fmt.Errorf("saving sync cursor: %w", err)`.
+
+**Fix 3: Ignored error from `wouldExceedMailboxLimit`** (`/Users/rejoesudarsan/Projects/nurgesh/internal/sync/sync.go`, line 114)
+- Changed `if skip, _ := e.wouldExceedMailboxLimit(row.ID); skip` to properly capture the error, check it, and return with context if non-nil.</result>
+<usage><total_tokens>23165</total_tokens><tool_uses>10</tool_uses><duration_ms>73318</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a7307cecf2791279e.output
+
+---
+
+<task-notification>
+<task-id>a2ca5f27ebf0db219</task-id>
+<tool-use-id>toolu_01Jf9X5hxVPA5PAQ2mzQ3BTo</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a2ca5f27ebf0db219.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix migrations + schema issues" completed</summary>
+<result>Everything looks correct. Here is a summary of what was done:
+
+---
+
+**File modified:** `/Users/rejoesudarsan/Projects/nurgesh/internal/db/db.go`
+
+**Issue 1 fix -- Transactional migrations:**
+- Wrapped the entire `ensureMigrations()` function body in a `db.Begin()` / `tx.Commit()` transaction with `defer tx.Rollback()` for safety on error.
+- All `ALTER TABLE ADD COLUMN` statements, backfill `UPDATE` statements, and the index recreation now execute within the same transaction.
+- Created `hasColumnTx(*sql.Tx, ...)` to replace `hasColumn(*sql.DB, ...)` inside the transaction. Removed the now-unused `hasColumn` function.
+
+**Issue 2 fix -- UNIQUE index on knowledge_atoms:**
+- Changed the Schema constant from `CREATE INDEX` to `CREATE UNIQUE INDEX` on `idx_knowledge_atoms_scope` (line 465) so new databases get the correct unique constraint from the start.
+- Added a migration step at the end of `ensureMigrations()` that drops the old non-unique index and recreates it as `CREATE UNIQUE INDEX` -- this handles existing databases that already have the non-unique version.
+
+**Verification:**
+- `go build ./internal/db/...` compiles cleanly.
+- All test suites that exercise `EnsureMigrations` pass (assembly, resolve, tier, enrich).</result>
+<usage><total_tokens>35698</total_tokens><tool_uses>16</tool_uses><duration_ms>189558</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a2ca5f27ebf0db219.output
+
+---
+
+<task-notification>
+<task-id>a12e0c7b67b7ba96c</task-id>
+<tool-use-id>toolu_0191Gh4jkGPSLPxgKfiU1TUm</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a12e0c7b67b7ba96c.output</output-file>
+<status>completed</status>
+<summary>Agent "Remove dead code across codebase" completed</summary>
+<result>All tests pass. Here is a summary of what was done:
+
+**Removed (4 items, all confirmed zero callers):**
+
+1. `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/freeapis.go` -- Removed `FetchSECEdgar()` function, `SECCompany` type, `SECFiling` type, and the now-unused `"io"` import. These had zero callers anywhere in the codebase.
+
+2. `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/registry.go` -- Removed the deprecated `DefaultRegistry()` function. Only referenced in documentation/plan files (not actual Go code).
+
+3. `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/provider.go` -- Removed `ProviderRegistry.All()` method. Zero callers confirmed via `.All()` search across all Go files.
+
+4. `/Users/rejoesudarsan/Projects/nurgesh/internal/connector/yaml.go` -- Removed the `CredFallback` struct and the `Fallback []CredFallback` field from `CredConfig`. While the `gmail.yaml` file has a `fallback:` key, the Go code never reads the `Fallback` field -- `LoadCredentials()` in `credentials.go` has its own hardcoded fallback chain. The YAML unmarshaler silently ignores unknown fields, so the YAML file continues to work.
+
+**Item 5 (browser duplication) -- No action needed:**
+There is no `internal/browser/` package. Only `internal/util/browser.go` exists (with `OpenBrowser()`), and it is the sole implementation used by `internal/account/auth.go`, `cmd/connect.go`, and `internal/connector/oauth.go`. No duplication exists.
+
+**Verification:** `go build ./...` succeeds with zero errors. Tests for both modified packages pass.</result>
+<usage><total_tokens>27850</total_tokens><tool_uses>33</tool_uses><duration_ms>190969</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a12e0c7b67b7ba96c.output
+
+---
+
+<task-notification>
+<task-id>aea8cf74acfe681d1</task-id>
+<tool-use-id>toolu_01DzvuiouEAfziV4gRgNJrrZ</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/aea8cf74acfe681d1.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix connector + auth error handling" completed</summary>
+<result>All changes look correct. Here is a summary of the fixes applied:
+
+**1. Token refresh silent fallback** (`/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go` ~line 291-295):
+- Added `fmt.Fprintf` to log the refresh error to stderr when falling back to the original token.
+- Added a check that `freshToken.AccessToken` is non-empty after the fallback. If both refresh fails AND the original token has an empty `AccessToken`, the function now returns an error.
+
+**2. Ticker leak** (`/Users/rejoesudarsan/Projects/nurgesh/cmd/connect.go`):
+- No change needed. The `defer ticker.Stop()` is already placed immediately after `time.NewTicker()` on both lines 67 and 121. The `defer` runs on all exit paths (timeout, success, or any error), so there is no leak.
+
+**3. Ignored json.Marshal errors** (`/Users/rejoesudarsan/Projects/nurgesh/internal/account/convex.go`):
+- `ExchangeGoogleToken`: Changed `body, _ :=` to `body, err :=` with error check and early return.
+- `RevokeToken`: Same fix.
+- `SyncEmails`: Same fix (also had an ignored marshal error).
+
+**4. Ignored json.Unmarshal in error response** (`/Users/rejoesudarsan/Projects/nurgesh/internal/account/convex.go` ~line 107):
+- Now checks the unmarshal error. If unmarshal fails or the parsed error message is empty, returns the raw response body with the HTTP status code instead.
+
+**5. Ignored time.Parse** (`internal/auth/auth.go`):
+- This issue does not exist in the current codebase. The `ValidatedAt` field is set via `time.Now().UTC().Format(time.RFC3339)` but is never parsed back with `time.Parse`. There is no `IsValid` method on `AuthFile`. No change made.
+
+**6. Config file permissions** (`/Users/rejoesudarsan/Projects/nurgesh/internal/project/config.go` line 67):
+- Changed `0644` to `0600` so only the owner can read/write the config file.
+
+**7. Connector directory permissions** (`/Users/rejoesudarsan/Projects/nurgesh/internal/connector/generic.go`):
+- Changed all four occurrences of `0755` to `0700` for token directories (OAuth2, API key, basic auth, webhook).
+
+**8. os.RemoveAll error ignored** (`/Users/rejoesudarsan/Projects/nurgesh/cmd/disconnect.go` line 30):
+- Now checks the error and returns it with context about which directory failed.
+
+All changes compile successfully with `go build ./...`.</result>
+<usage><total_tokens>38556</total_tokens><tool_uses>36</tool_uses><duration_ms>203403</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/aea8cf74acfe681d1.output
+
+---
+
+why is it not fixed?
+
+---
+
+<task-notification>
+<task-id>a8cd1f599b9ec0f71</task-id>
+<tool-use-id>toolu_01SP95yergLfmrjNtmgqNXNM</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a8cd1f599b9ec0f71.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix config TOCTOU race" completed</summary>
+<result>Build and tests pass. Here is a summary of what was done:
+
+**File modified:** `/Users/rejoesudarsan/Projects/nurgesh/internal/project/config.go`
+
+**Changes:**
+
+1. Added `syscall` to imports.
+
+2. Added a `configLockFile` constant (`.nurge/config.lock`) and a `withConfigLock(fn func() error) error` helper that:
+   - Opens/creates the lockfile with `os.OpenFile`
+   - Acquires an exclusive lock via `syscall.Flock(fd, LOCK_EX)` -- this blocks if another process holds the lock
+   - Runs the callback
+   - Releases the lock and closes the file via defers
+
+3. Wrapped all four mutating functions in `withConfigLock`:
+   - `SetConnector` -- Load, modify connectors map, Write
+   - `RemoveConnector` -- Load, delete from connectors map, Write
+   - `Set` -- Load, modify settings map, Write
+   - `SetSetupCompleted` -- Load, modify flag, Write
+
+4. Left `Get` and `Load` unlocked since they are read-only and don't suffer from the TOCTOU pattern (no subsequent Write).
+
+**Why `syscall.Flock`:** This is a CLI tool where multiple processes (e.g., Claude Code hooks) can run concurrently. A `sync.Mutex` only protects within a single process. `syscall.Flock` provides inter-process locking, is advisory (cooperative among nurge processes), blocks until the lock is available (no busy-wait/retry needed), and automatically releases if the process crashes (kernel cleans up).</result>
+<usage><total_tokens>20790</total_tokens><tool_uses>15</tool_uses><duration_ms>80184</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a8cd1f599b9ec0f71.output
+
+---
+
+<task-notification>
+<task-id>a5acb8b6f7bad74ec</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a5acb8b6f7bad74ec.output</output-file>
+<status>completed</status>
+<summary>Agent "Fix curl-pipe-to-sh auto-update" completed</summary>
+<result>Everything looks correct. Here is a summary of what was done:
+
+**Security fix in `/Users/rejoesudarsan/Projects/nurgesh/cmd/hook.go`**
+
+**Problem:** `runAutoUpdate()` at line 888 used `exec.Command("sh", "-c", "curl -fsSL https://install.nurge.sh | sh >/dev/null 2>&1")` which:
+- Piped a remote script directly into `sh` (RCE vector if the endpoint is compromised)
+- Suppressed all output (`>/dev/null 2>&1`) making it invisible to the user
+- Shelled out to `curl` unnecessarily when Go has native HTTP capabilities
+
+**Fix:** Replaced the curl-pipe-to-sh pattern with a call to the existing `update.SelfUpdate()` from `internal/update/update.go`, which already implements a secure update flow:
+1. Downloads the release archive to a temp directory (no piping to shell)
+2. Verifies SHA-256 checksum against the release's `checksums.txt`
+3. Extracts the binary from the tar.gz archive
+4. Atomically replaces the current executable (write to `.new`, then rename)
+
+**Changes:**
+- Replaced `"os/exec"` import with `"context"` and added `"github.com/usenurge/nurgesh/internal/update"` import
+- Changed `runAutoUpdate()` signature to `runAutoUpdate(targetVersion string)` so it receives the target version from the caller (which already had it)
+- Replaced the function body: instead of shell-piping curl, it spawns a goroutine that calls `update.SelfUpdate` with a 60-second timeout context
+- Updated the call site to pass the `latest` version string
+
+The background/non-blocking behavior is preserved (goroutine instead of `cmd.Start()` + `go cmd.Wait()`). Full project builds cleanly with `go build ./...`.</result>
+<usage><total_tokens>28870</total_tokens><tool_uses>26</tool_uses><duration_ms>116161</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/c3a08411-f3e2-4640-aee4-685ed527807c/tasks/a5acb8b6f7bad74ec.output
+
+---
+
+yes
