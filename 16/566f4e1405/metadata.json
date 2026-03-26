@@ -5,8 +5,22 @@
   "branch": "main",
   "checkpoints_count": 7,
   "files_touched": [
+    "cmd/disconnect.go",
+    "cmd/hook.go",
+    "cmd/sync.go",
+    "internal/account/convex.go",
+    "internal/connector/generic.go",
+    "internal/connector/registry.go",
+    "internal/connector/yaml.go",
+    "internal/db/db.go",
+    "internal/enrich/freeapis.go",
+    "internal/enrich/provider.go",
+    "internal/project/config.go",
     "internal/resolve/resolve.go",
-    "internal/resolve/resolve_test.go"
+    "internal/resolve/resolve_test.go",
+    "internal/session/learning.go",
+    "internal/sync/sync.go",
+    "internal/util/callbackserver.go"
   ],
   "sessions": [
     {
@@ -14,6 +28,12 @@
       "transcript": "/16/566f4e1405/0/full.jsonl",
       "content_hash": "/16/566f4e1405/0/content_hash.txt",
       "prompt": "/16/566f4e1405/0/prompt.txt"
+    },
+    {
+      "metadata": "/16/566f4e1405/1/metadata.json",
+      "transcript": "/16/566f4e1405/1/full.jsonl",
+      "content_hash": "/16/566f4e1405/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
