@@ -3,3 +3,7 @@ look athe the same for all connectors? if the connects from disconnect from anyw
 ---
 
 so what are the edgecases to be solved here?
+
+---
+
+test and fixed all
