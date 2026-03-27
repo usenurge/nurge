@@ -1,0 +1,116 @@
+is process.md completely buillt?
+
+---
+
+is thi built as code?
+
+---
+
+make it 100%
+
+---
+
+we have docs where we reaserched thi previously
+
+---
+
+do it spec by spec
+
+---
+
+ok build all
+
+---
+
+yes go ahead
+
+---
+
+yes go ahead
+
+---
+
+execute without writing plans by creating a task
+
+---
+
+<task-notification>
+<task-id>a5014fef472bbf6b7</task-id>
+<tool-use-id>toolu_01MH1QcHWYPFZN1HP5uU49PG</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a5014fef472bbf6b7.output</output-file>
+<status>completed</status>
+<summary>Agent "Build Gap 3: advanced sequence templates" completed</summary>
+<result>The package compiles cleanly. Here is a summary of what was done:
+
+**Modified file:** `/Users/rejoesudarsan/Projects/nurgesh/internal/sequence/types.go`
+
+Added 3 new built-in sequence templates to the `builtInTemplates` map:
+
+1. **`pod-5-email-21d`** - Becc Holland pod structure with 5 steps over 21 days (delays: 0s, 168h/7d, 288h/12d, 408h/17d, 480h/20d)
+2. **`aggressive-5-touch-10d`** - Jason Bay tight cadence with 5 steps over 10 days (delays: 0s, 48h/2d, 120h/5d, 192h/8d, 240h/10d)
+3. **`nurture-3-touch-30d`** - Long-cycle Tier 3 nurture with 3 steps over 30 days (delays: 0s, 336h/14d, 672h/28d)
+
+The total built-in template count goes from 3 to 6. The package builds successfully with no errors.</result>
+<usage><total_tokens>21071</total_tokens><tool_uses>3</tool_uses><duration_ms>36756</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a5014fef472bbf6b7.output
+
+---
+
+<task-notification>
+<task-id>a32a1da73e2ae977f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a32a1da73e2ae977f.output</output-file>
+<status>completed</status>
+<summary>Agent "Build Gap 1: research save/get CLI" completed</summary>
+<result>Everything looks correct. Here is a summary of what was done:
+
+**Created files:**
+
+1. `/Users/rejoesudarsan/Projects/nurgesh/cmd/research/register.go` -- Follows the same pattern as `cmd/pipeline/register.go`, exports `RegisterAll()` which adds the `researchCmd` to the root.
+
+2. `/Users/rejoesudarsan/Projects/nurgesh/cmd/research/research.go` -- Contains three subcommands:
+   - `nurge research save --prospect <email> --stdin` -- Reads JSON from stdin, validates it, derives domain from email if `--domain` not provided, calls `assembly.SaveDossier()`. Supports `--name`, `--domain`, `--tier` (default 0), `--depth` (default "deep").
+   - `nurge research get --prospect <email>` -- Calls `assembly.GetDossier()`, outputs `{"found":false}` in JSON mode or "No dossier found" in text mode when nil. Otherwise outputs the full `ResearchDossier` struct.
+   - `nurge research list` -- Calls `assembly.ListDossiers()` with optional `--domain` filter and `--limit` (default 20). JSON mode outputs the array; text mode shows a formatted line per dossier.
+   - All three subcommands share the `--format` persistent flag on the parent `researchCmd`.
+
+**Modified file:**
+
+3. `/Users/rejoesudarsan/Projects/nurgesh/cmd/root.go` -- Added `"github.com/usenurge/nurgesh/cmd/research"` import and `research.RegisterAll(rootCmd)` call in `init()`.
+
+The new package follows the exact same patterns as the existing codebase: `db.Open()`/`defer d.Close()`, `json.NewEncoder(os.Stdout)` with `SetIndent`, package-level format variable, flag registration in `init()`, and `RunE` command handlers. The pre-existing build errors in `internal/project` and `internal/sequence` are unrelated to these changes.</result>
+<usage><total_tokens>30056</total_tokens><tool_uses>18</tool_uses><duration_ms>119929</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a32a1da73e2ae977f.output
+
+---
+
+<task-notification>
+<task-id>a03b3643d61f3bc4f</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a03b3643d61f3bc4f.output</output-file>
+<status>completed</status>
+<summary>Agent "Build Gap 5: session-end learning hook" completed</summary>
+<result>All tests pass. Here is a summary of the changes made to `/Users/rejoesudarsan/Projects/nurgesh/internal/project/step_hooks.go`:
+
+**1. Extended `hookEntry` struct** (line 16-19) to support both `command` and `prompt` fields, where exactly one should be set per entry.
+
+**2. Added a prompt hook to the Stop event** (line 49-53) in `requiredHookGroups`. The Stop group now has two hooks in its array:
+- The existing command hook: `nurge hook stop`
+- The new prompt hook with the learning-capture instruction
+
+**3. Replaced `hookEntryJSON` with `hookEntryToJSON`** (line 222-227) which checks whether the entry has a prompt or command and produces the appropriate JSON structure (`{"type": "prompt", "prompt": ...}` or `{"type": "command", "command": ...}`).
+
+**4. Added `hookEntryExists`** (line 172-206), a generalized version of the old `hookCommandExists` that can check for both command and prompt hooks in the settings JSON. The old `hookCommandExists` is kept as a convenience wrapper (line 208-211) in case it is needed elsewhere.
+
+**5. Updated `Done()` and `Run()`** to use `hookEntryExists` and `hookEntryToJSON` so the idempotency checks and installation logic work correctly for both hook types.
+
+When the hooks installer runs, the resulting `.claude/settings.json` Stop entry will contain both the command hook and the prompt hook in the same matcher group, so Claude will be prompted to capture learnings at the end of every session.</result>
+<usage><total_tokens>27307</total_tokens><tool_uses>17</tool_uses><duration_ms>94596</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a03b3643d61f3bc4f.output
+
+---
+
+can you look at all the edge cases here?
