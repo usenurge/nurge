@@ -3,8 +3,9 @@
   "checkpoint_id": "56d69781487a",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 2,
+  "checkpoints_count": 6,
   "files_touched": [
+    "convex/crypto.ts",
     "convex/gmailApi.ts",
     "convex/outcomeDetection.ts",
     "convex/replyDrafts.ts",
@@ -17,13 +18,19 @@
       "transcript": "/56/d69781487a/0/full.jsonl",
       "content_hash": "/56/d69781487a/0/content_hash.txt",
       "prompt": "/56/d69781487a/0/prompt.txt"
+    },
+    {
+      "metadata": "/56/d69781487a/1/metadata.json",
+      "transcript": "/56/d69781487a/1/full.jsonl",
+      "content_hash": "/56/d69781487a/1/content_hash.txt",
+      "prompt": "/56/d69781487a/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 296,
-    "cache_creation_tokens": 642685,
-    "cache_read_tokens": 36371011,
-    "output_tokens": 110319,
-    "api_call_count": 205
+    "input_tokens": 2989,
+    "cache_creation_tokens": 695640,
+    "cache_read_tokens": 37422156,
+    "output_tokens": 127427,
+    "api_call_count": 230
   }
 }
