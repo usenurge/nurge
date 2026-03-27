@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.1",
   "checkpoint_id": "da6ba3fd99cb",
+  "session_id": "5533b6d5-a437-4aea-aacc-b924cf9deb73",
   "strategy": "manual-commit",
+  "created_at": "2026-03-27T04:33:59.414338Z",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 2,
+  "checkpoints_count": 1,
   "files_touched": [
     "cmd/cmdutil/dbhelper.go",
     "cmd/conn/connect.go",
@@ -102,25 +104,27 @@
     "internal/tier/db.go",
     "internal/util/callbackserver.go"
   ],
-  "sessions": [
-    {
-      "metadata": "/da/6ba3fd99cb/0/metadata.json",
-      "transcript": "/da/6ba3fd99cb/0/full.jsonl",
-      "content_hash": "/da/6ba3fd99cb/0/content_hash.txt",
-      "prompt": ""
-    },
-    {
-      "metadata": "/da/6ba3fd99cb/1/metadata.json",
-      "transcript": "/da/6ba3fd99cb/1/full.jsonl",
-      "content_hash": "/da/6ba3fd99cb/1/content_hash.txt",
-      "prompt": "/da/6ba3fd99cb/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "7cc33db41c0f",
+  "checkpoint_transcript_start": 466,
+  "transcript_lines_at_start": 466,
   "token_usage": {
-    "input_tokens": 8437,
-    "cache_creation_tokens": 28635,
-    "cache_read_tokens": 185792,
-    "output_tokens": 1644,
-    "api_call_count": 3
+    "input_tokens": 2,
+    "cache_creation_tokens": 804,
+    "cache_read_tokens": 161098,
+    "output_tokens": 412,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 19
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-27T04:33:58.905978Z",
+    "agent_lines": 2981,
+    "human_added": 13924,
+    "human_modified": 58,
+    "human_removed": 0,
+    "total_committed": 16963,
+    "agent_percentage": 17.573542415846255
   }
 }
