@@ -4,7 +4,10 @@
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
   "checkpoints_count": 1,
-  "files_touched": null,
+  "files_touched": [
+    "convex/slack.ts",
+    "internal/connector/definitions/slack.yaml"
+  ],
   "sessions": [
     {
       "metadata": "/24/c9d711f452/0/metadata.json",
@@ -17,6 +20,12 @@
       "transcript": "/24/c9d711f452/1/full.jsonl",
       "content_hash": "/24/c9d711f452/1/content_hash.txt",
       "prompt": "/24/c9d711f452/1/prompt.txt"
+    },
+    {
+      "metadata": "/24/c9d711f452/2/metadata.json",
+      "transcript": "/24/c9d711f452/2/full.jsonl",
+      "content_hash": "/24/c9d711f452/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
