@@ -76,9 +76,14 @@ install() {
   local url="https://github.com/${REPO}/releases/download/${version}/${archive_name}.${ext}"
 
   info "Downloading ${BINARY} ${version} (${os}/${arch})..."
-  local tmpdir
+  tmpdir=""
+  cleanup_tmpdir() {
+    if [ -n "${tmpdir:-}" ] && [ -d "$tmpdir" ]; then
+      rm -rf "$tmpdir"
+    fi
+  }
   tmpdir=$(mktemp -d)
-  trap 'rm -rf "$tmpdir"' EXIT
+  trap cleanup_tmpdir EXIT
 
   curl -fsSL "$url" -o "${tmpdir}/archive.${ext}" || fail "Download failed. Check that ${version} exists at https://github.com/${REPO}/releases"
 
