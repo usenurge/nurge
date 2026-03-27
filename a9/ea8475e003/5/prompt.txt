@@ -1,0 +1,29 @@
+in feedback.md which the is most fundamental feedback read that and make it P0,P1,P2,P3
+
+---
+
+what all is left to be done?
+
+---
+
+okay now, interestingly, read the code, not spec and review this
+
+---
+
+yes and finish it
+
+---
+
+can we build the next import hing other thant he 1000 dollar operator?
+
+---
+
+build and wire this
+
+---
+
+build this - but at session start the banner should only show the most important thing not everything
+
+---
+
+2
