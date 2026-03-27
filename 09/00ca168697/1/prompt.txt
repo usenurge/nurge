@@ -19,3 +19,7 @@ make slack ironclad
 ---
 
 also, can we ue, gmail connector, directly without unipile?
+
+---
+
+yes
