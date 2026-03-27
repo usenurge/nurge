@@ -1,0 +1,21 @@
+how many connector do we have?
+
+---
+
+check this now
+
+---
+
+ok
+
+---
+
+slack is good as other connectors?
+
+---
+
+make slack ironclad
+
+---
+
+also, can we ue, gmail connector, directly without unipile?
