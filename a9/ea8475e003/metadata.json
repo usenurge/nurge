@@ -3,8 +3,10 @@
   "checkpoint_id": "a9ea8475e003",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
+    "convex/crmWebhook.ts",
+    "convex/crons.ts",
     "convex/http.ts"
   ],
   "sessions": [
@@ -13,13 +15,19 @@
       "transcript": "/a9/ea8475e003/0/full.jsonl",
       "content_hash": "/a9/ea8475e003/0/content_hash.txt",
       "prompt": "/a9/ea8475e003/0/prompt.txt"
+    },
+    {
+      "metadata": "/a9/ea8475e003/1/metadata.json",
+      "transcript": "/a9/ea8475e003/1/full.jsonl",
+      "content_hash": "/a9/ea8475e003/1/content_hash.txt",
+      "prompt": "/a9/ea8475e003/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 262,
-    "cache_creation_tokens": 620922,
-    "cache_read_tokens": 28078244,
-    "output_tokens": 99878,
-    "api_call_count": 173
+    "input_tokens": 2946,
+    "cache_creation_tokens": 670322,
+    "cache_read_tokens": 28959026,
+    "output_tokens": 114088,
+    "api_call_count": 195
   }
 }

@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "a9ea8475e003",
+  "session_id": "5533b6d5-a437-4aea-aacc-b924cf9deb73",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-27T03:13:46.196225Z",
+  "branch": "feat/server-side-reply-handling",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "convex/crmWebhook.ts",
+    "convex/crons.ts",
+    "convex/http.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "83c940e26a00",
+  "token_usage": {
+    "input_tokens": 2684,
+    "cache_creation_tokens": 49400,
+    "cache_read_tokens": 880782,
+    "output_tokens": 14210,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 12
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-27T03:13:45.883263Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 485,
+    "human_removed": 332,
+    "total_committed": 172,
+    "agent_percentage": 0
+  }
+}
