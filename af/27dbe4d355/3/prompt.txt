@@ -23,3 +23,7 @@ build and wire this
 ---
 
 build this - but at session start the banner should only show the most important thing not everything
+
+---
+
+2
