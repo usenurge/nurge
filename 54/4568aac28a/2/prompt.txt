@@ -1,0 +1,137 @@
+how to setup signal repo here?
+
+---
+
+read setup n @docs/process.md you wll understand
+
+---
+
+the leads already in the system needs to be rechecked for all signals,  but this will block my linkedin/
+
+---
+
+this will go to illions, but individual linkedin profiles have liits which should also be considered while activities, all limits must be checked before all activities
+
+---
+
+research
+
+---
+
+per user
+
+---
+
+we need to set system wide limits here with tier based pricing, free tier, 185$, 495$ and Custom? then how would this work?
+
+---
+
+but let talk about how pricing works otherwise for this tool? read entire code and tell me
+
+---
+
+lets research on what is abetter plan for nurge at this time, for this product, I need a 14 days free trial and few tiers. how can we do that?
+
+---
+
+i like clay's pricing
+
+---
+
+we have a system that record everything that happens in a window - am i worng?
+
+---
+
+im confused, but help me
+
+---
+
+the fure will be a ingle person incharge of outbund? and will this system help them?
+
+---
+
+multichannel?
+
+---
+
+to start with and with what is available now, I just want to have 1, free tier with 14 days paid and a paid one
+
+---
+
+can we handle 10k leads? do a better research
+
+---
+
+yes but first find all of it, it might be hidden
+
+---
+
+yes, do we have brave api tool?
+
+---
+
+how can remote trigger be used here? can it help resposnd to replied without switching on the session?
+
+---
+
+okay what do we do now and how can it we built with remove trigger and cron schedule will make the app better?
+
+---
+
+is there a limit on remote trigger?
+
+---
+
+that we can dscuss - but I need to know what part of thing in our operation can we done using remote trigger? i want after working hours reply - not enrichment.
+
+---
+
+add this to feedback.md
+
+---
+
+currenrly what happens for replies
+
+---
+
+but loacal dipatcher need to be active? what is the edgecase here?
+
+---
+
+why not b?
+
+---
+
+build this
+
+---
+
+what would make this a CRM in the future?
+
+---
+
+in multi stakeholder cases, gmail stops there and AE takes charge
+
+---
+
+but Nurge need closed los/won data to build context?
+
+---
+
+we can read from gmail or CRM, data collection hould be paive
+
+---
+
+only track CRM for this now
+
+---
+
+yes
+
+---
+
+also GMAIL in terms no CRM
+
+---
+
+2
