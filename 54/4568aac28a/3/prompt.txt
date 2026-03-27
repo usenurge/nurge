@@ -1,0 +1,1023 @@
+read every line of code, just line of code, undersatnd what is written and hel me find edgecaes. write it on an edgecases.md file
+
+---
+
+<task-notification>
+<task-id>adebe222c2eaa68ed</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/adebe222c2eaa68ed.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze Convex TypeScript files edge cases" completed</summary>
+<result>I have now read every file completely. Here is the comprehensive audit.
+
+---
+
+## Edge Case Audit: `/Users/rejoesudarsan/Projects/nurgesh/convex/`
+
+---
+
+### 1. SECURITY ISSUES
+
+**1a. Token in by_token index can be empty string -- authenticates as any logged-out user**
+- File: `convex/auth.ts:69` + `convex/auth.ts:36-40`
+- `clearUserToken` sets token to `""`. The `findUserByToken` query searches `by_token` index with the provided token. If an attacker sends `token: ""`, it will match any user whose token was cleared (logged out). The `validateToken` and `revokeToken` endpoints, as well as every `findUserByToken` call in `sendApi.ts`, `connect.ts`, and `enrich.ts`, are all vulnerable. A logged-out user's record becomes matchable by an empty-string token.
+- **Fix:** `findUserByToken` should reject empty/blank tokens before querying, or `clearUserToken` should set a non-guessable sentinel value (or delete the field).
+
+**1b. Gmail Pub/Sub webhook has no authentication**
+- File: `convex/gmailWebhook.ts:14-47`
+- The `gmailPubSubWebhook` handler performs zero authentication. Anyone can POST a crafted payload to `/api/gmail-webhook` to mark any email address as needing sync. Google Pub/Sub push subscriptions support JWT verification via the `Authorization` header, but it is not checked here.
+
+**1c. Unipile webhook secret check is optional (bypassed when env var is missing)**
+- File: `convex/webhook.ts:8-14`
+- `if (secret && authHeader !== secret)` -- if `UNIPILE_WEBHOOK_SECRET` is not set, the check is skipped entirely. Any external caller can invoke the webhook. This should probably reject requests when the secret is not configured rather than accepting all.
+
+**1d. Unipile account callback has no authentication**
+- File: `convex/webhook.ts:107-148`
+- `unipileAccountCallback` is a public HTTP endpoint that accepts any POST with an `account_id` and `name` field. A malicious caller can register arbitrary Unipile account IDs against any userId by guessing or brute-forcing the userId (which is a Convex document ID embedded in the `name` field from `requestConnectionLink`). There is no signature verification or shared secret.
+
+**1e. `enrollments.ts` mutations are public mutations, not internal**
+- File: `convex/enrollments.ts:14, 113, 204, 237`
+- `createEnrollment`, `stopEnrollment`, `pauseEnrollment`, and `resumeEnrollment` use `mutation` (public), not `internalMutation`. Any client with the Convex deployment URL can call these directly, passing any `userId`. There is no authentication check within these handlers.
+
+**1f. `sync.ts` pullExecutionState and pushLocalState are public with no auth**
+- File: `convex/sync.ts:33, 72`
+- Both `pullExecutionState` (query) and `pushLocalState` (mutation) are public. Any caller can pull another user's data or push arbitrary data by passing any `userId`. No token validation occurs.
+
+**1g. `unipile.ts` requestConnectionLink and backfillEmails are public actions**
+- File: `convex/unipile.ts:6, 57`
+- Both use `action` (public), not `internalAction`. Anyone can call `requestConnectionLink` with any userId/provider, or trigger `backfillEmails` for any user's Unipile account.
+
+---
+
+### 2. RACE CONDITIONS
+
+**2a. Claim-then-send race in dispatcher (TOCTOU)**
+- File: `convex/dispatcher.ts:85-107`
+- The cron `checkDueTasks` is an `internalAction` that runs multiple separate query+mutation steps. Between `claimTask` (line 85-88) and the actual `sendViaUnipile` (line 99), another cron invocation could also claim and send the same task. The claim sets `sendStatus: "pending_remote_send"`, but `findDueTasks` filters on `sendStatus: "pending"` -- however, between the query at line 22 and the mutation at line 85, a concurrent invocation could have already picked the same batch. Convex actions are not transactional across multiple runQuery/runMutation calls.
+
+**2b. syncVersion increment race across all files**
+- Files: `convex/helpers.ts:19-37`, `convex/send.ts:125-196`, `convex/sendApi.ts:472-496`, `convex/webhook.ts:300-370`, `convex/connect.ts:278-305`, many others.
+- The pattern `read syncState -> compute version+1 -> write syncState` appears in dozens of places. Within a single mutation this is safe (Convex serializes mutations). But in `registerUnipileAccount` (webhook.ts:374-533), the function reads syncState at line 436-440, writes version, and then reads syncState **again** at line 484-488 (shadowing the outer `version` and `syncState` const). The second read sees the DB state as of the mutation start (snapshot isolation within the mutation), not the write from line 459-462. This means the second `version` at line 488 will be stale -- it re-reads the same old value, potentially producing duplicate sync versions.
+
+**2c. Non-atomic check-then-act in `processReply`**
+- File: `convex/webhook.ts:164-273`
+- This mutation reads enrollments, tasks, and drafts, then patches them all. As a single mutation this is safe within Convex's transaction model. However, if two webhook events arrive for the same contact nearly simultaneously, both mutations will run, and both will attempt to stop the same enrollment and cancel the same tasks. The second one will redundantly set `status: "stopped"` on an already-stopped enrollment and re-cancel already-canceled tasks. Not a data corruption bug, but wasted writes and potential sync version inflation.
+
+---
+
+### 3. LOGIC ERRORS
+
+**3a. `generateToken` modulo bias**
+- File: `convex/auth.ts:14-19`
+- `chars[b % chars.length]` where `chars.length = 62`. Since `256 % 62 = 8`, the first 8 characters (a-h) have a slightly higher probability than the remaining 54. For a security token, this is a minor but real bias. Using rejection sampling or `crypto.randomUUID` would be better.
+
+**3b. `listEmailsAfterVersion` does NOT filter by userId in the index**
+- File: `convex/connect.ts:225-242`
+- The query uses `.withIndex("by_sync_version")` which does not include userId, then does a post-hoc `.filter()` in JavaScript. This means it scans ALL emails in the system by sync version, loads them all into memory, and then filters by userId. For a multi-tenant system this is both a performance problem and a data leak risk (the action could time out, or if the filter logic had a bug, other users' emails could leak).
+
+**3c. `listEmailsAfterVersion` userId type mismatch**
+- File: `convex/connect.ts:226-228`
+- The arg `userId` is `v.string()`, but the calling code at line 152 passes `user._id` which is a Convex `Id<"users">`. In the filter at line 238, it compares `e.userId === args.userId`. Whether this works depends on whether `user._id` serializes to the same string stored in `e.userId`. If `emails.userId` stores a plain string (like from auth), but `user._id` is a Convex ID object, the comparison could fail silently, returning zero emails.
+
+**3d. `countSendsForDay` uses compound index incorrectly**
+- File: `convex/helpers.ts:80-88`
+- The `by_mailbox_day` index is defined as `["mailboxId", "sentAt"]` (schema.ts:88). The query uses `.eq("mailboxId", ...).gte("sentAt", ...).lte("sentAt", ...)`. However, Convex index range queries require `.eq()` on all prefix fields followed by a single range operation. Using both `.gte()` and `.lte()` on the same field within `withIndex` may not work as expected in Convex -- you need to chain them: `.eq("mailboxId", x).gte("sentAt", start)` and then apply `.lte()` as a post-filter or use `.filter()`. This could silently return incorrect counts.
+
+**3e. `getWorkingLinkedInAccount` ignores the Convex-Unipile cross-check it claims to do**
+- File: `convex/enrich.ts:33-57`
+- The function fetches all LinkedIn accounts from Unipile API, but then at line 48-49 does `for (const id of linkedinAccounts) { return id; }` -- it returns the FIRST active Unipile account regardless of whether it matches any account in `ids` (the Convex accounts for this user). The comment says "Return first account that's both in Convex and active in Unipile" but the code never checks if `id` is in `ids`. A user could end up using another user's LinkedIn account.
+
+**3f. `recordSendSuccess` does not advance to the NEXT step**
+- File: `convex/send.ts:164`
+- `const newStep = task.stepNumber;` sets the enrollment's `currentStep` to the just-completed task's step. But it doesn't schedule/create the next task or update `nextDueAt` for the next due task. The enrollment's `nextDueAt` remains unchanged (line 172). Future tasks exist but `nextDueAt` will be stale. Same issue in `sendApi.ts:698`.
+
+**3g. `processReply` matches by contactEmail only, not by thread**
+- File: `convex/webhook.ts:176-180`
+- The `threadId` and `providerId` are passed as args but never used for matching enrollments. An email from the same contact on a completely unrelated thread will stop ALL active enrollments for that contact across all sequences, even if the reply is to a personal thread unrelated to the sequence.
+
+---
+
+### 4. MISSING VALIDATION / NULL CHECKS
+
+**4a. `googleAuth` uses `googleUser.email` before null check**
+- File: `convex/auth.ts:96-101`
+- Line 96 assigns `const email: string = googleUser.email;`, and line 97 uses `email.split("@")[0]` (via the `||` fallback for `name`). The null check at line 99 (`if (!email)`) comes AFTER the split, so if `googleUser.email` is `undefined`, the name assignment on line 97 will throw `Cannot read properties of undefined (reading 'split')` before the check is reached.
+
+**4b. `isSuppressed` does not validate email format**
+- File: `convex/helpers.ts:40-71`
+- If `email` is an empty string or doesn't contain `@`, `email.split("@")[1]` will be `undefined`, which is handled by the `if (domain)` check at line 58. But if someone passes an email like `"@"` then `domain` will be `""` (falsy), skipping domain suppression. More importantly, the email suppression lookup at line 49 will match `value: "@"` which is probably not the intent. No email format validation anywhere in the call chain.
+
+**4c. `unipileAccountCallback` does not validate userId format**
+- File: `convex/webhook.ts:116-122`
+- The `userId` is parsed from the `name` field by splitting on `:`. If the name field is tampered with (e.g., `"notarealid:GOOGLE"`), the code will happily pass `"notarealid"` as a userId to `registerUnipileAccount`. Downstream, this creates records with a non-existent userId, creating orphaned data.
+
+**4d. Missing JSON parse error handling in `gmailWebhook`**
+- File: `convex/gmailWebhook.ts:25-26`
+- `atob(message.data)` followed by `JSON.parse(decoded)` -- if the base64 data is malformed or not valid JSON, these will throw. The outer try/catch returns 200 on error (line 43-46), which is intentional for Pub/Sub, but the error is silently swallowed with only a console.error.
+
+**4e. `sendEmail` does not validate `to` is a valid email address**
+- File: `convex/sendApi.ts:42`
+- The `to` field is checked for truthiness but not for valid email format. Passing `to: "not-an-email"` will pass validation and attempt to send via Unipile, which may fail opaquely.
+
+**4f. Missing validation of `sendType` values**
+- File: `convex/sendApi.ts:81`, `convex/dispatcher.ts:71-77`
+- `sendType` is accepted as any string. If it doesn't match `first_touch`, `follow_up`, or `reply`, the cap lookup returns `0` and the `if (cap > 0 && ...)` check passes, meaning the send proceeds without any rate limiting.
+
+---
+
+### 5. TYPE SAFETY ISSUES
+
+**5a. Pervasive `any` casts in `connect.ts`, `enrich.ts`, `webhook.ts`**
+- File: `convex/connect.ts:5,12,37`, `convex/enrich.ts:4,11,29,30,44,45,59,60,70`, `convex/webhook.ts:48,83`
+- `authenticateRequest` in both `connect.ts:12` and `enrich.ts:11` types `ctx` as `any`, losing all type safety on what internal functions can be called. The functions `handleNewEmail` and `handleAccountStatus` in `webhook.ts` also use `ctx: any`.
+
+**5b. `sync.ts:pushLocalState` uses `v.any()` for row data**
+- File: `convex/sync.ts:79`
+- `data: v.any()` means any arbitrary data can be pushed into any Convex table. Combined with the lack of authentication (issue 1f), this is extremely dangerous -- arbitrary data injection into any table.
+
+**5c. `sync.ts` casts table names with `as any`**
+- File: `convex/sync.ts:106,120`
+- `ctx.db.query(convexTable as any)` and `ctx.db.insert(convexTable as any, rowData)` -- if `reverseTableMap` has an entry that doesn't correspond to a real Convex table, this will fail at runtime.
+
+**5d. `sendApi.ts:handleExistingTask` uses `ctx: any`**
+- File: `convex/sendApi.ts:251`
+- The `ctx` parameter is typed as `any`, losing type checking on all internal function calls.
+
+---
+
+### 6. SILENT FAILURES
+
+**6a. `claimTask` silently does nothing if task not found**
+- File: `convex/dispatcher.ts:204-215`
+- If the task was deleted or its externalId changed between `findDueTasks` and `claimTask`, the mutation silently returns without error. The subsequent `sendViaUnipile` call still proceeds, using stale data from the query.
+
+**6b. `markTaskSent` and `markTaskFailed` silently return if task not found**
+- File: `convex/sendApi.ts:656,746`
+- After a successful Unipile send, if the task has been deleted/modified concurrently, `markTaskSent` returns silently. The email was sent but no record is created -- the send event is lost, the daily cap counter is not incremented, and the enrollment is not advanced.
+
+**6c. `recordSendSuccess` silently skips enrollment advancement if enrollment not found**
+- File: `convex/send.ts:157-188`
+- If the enrollment is missing (deleted or externalId mismatch), the enrollment is not advanced, the draft is not marked sent, but the task IS marked completed. The sequence is now in an inconsistent state.
+
+**6d. `revokeToken` returns `{ ok: true }` on error**
+- File: `convex/auth.ts:176`
+- The catch block returns success even on failure. While documented as "best effort," this means callers can never distinguish between successful and failed revocations.
+
+---
+
+### 7. MISSING BOUNDARY CHECKS
+
+**7a. `enrichCompany` employee pagination has no upper bound**
+- File: `convex/enrich.ts:112-123`
+- The `do...while (cursor)` loop at line 112 will paginate indefinitely. For a large company (e.g., Google, Microsoft), this could make thousands of API calls and consume huge amounts of action time/memory. There is no `maxPages` limit like `enrichSearch` has.
+
+**7b. `backfillEmails` has no pagination limit**
+- File: `convex/unipile.ts:74-132`
+- The `do...while (cursor)` loop at line 74 will fetch all sent emails for 90 days with no upper bound. For a heavy email user, this could be tens of thousands of emails, each requiring a separate `storeEmail` mutation call. This will likely exceed Convex action time limits.
+
+**7c. `pullExecutionState` collects ALL rows for a user across 8 tables without pagination**
+- File: `convex/sync.ts:40-57`
+- For a user with thousands of emails, tasks, etc., this will attempt to load and return all rows with `syncVersion > threshold` across 8 tables in a single query. Convex has response size limits that could be hit.
+
+**7d. `pushLocalState` processes all rows in a single mutation**
+- File: `convex/sync.ts:100-123`
+- A large batch of rows will create many DB operations in a single mutation. Convex mutations have time and operation count limits (8MB output, 16384 document reads, etc.). Large pushes will fail.
+
+---
+
+### 8. SCHEMA INCONSISTENCIES
+
+**8a. Schema says `statusReason` is optional, but code sets it to `""` (non-optional)**
+- File: `convex/schema.ts:102` vs `convex/enrollments.ts:62`, `convex/sendApi.ts:570`
+- Schema: `statusReason: v.optional(v.string())`. But `createEnrollment` at enrollments.ts:62 sets `statusReason: ""` and `createSendEnrollment` at sendApi.ts:570 sets `statusReason: ""`. This works (string is valid for optional string) but is inconsistent -- some code paths set empty string, others set the actual reason, and the schema allows `undefined`. Downstream code checking `enrollment.statusReason` may get `undefined` or `""` depending on the code path.
+
+**8b. `contextMetricsDaily` table has no `by_sync_version` index**
+- File: `convex/schema.ts:288-291` vs `convex/sync.ts:21-30`
+- `contextMetricsDaily` is not in the `EXECUTION_TABLES` list in `sync.ts`, so it won't be pulled. But it also lacks a `by_sync_version` index if it were ever added. Possibly intentional but worth noting.
+
+**8c. `listEmailsAfterVersion` arg type mismatch with `userId` field**
+- File: `convex/connect.ts:226-228` vs `convex/schema.ts:41`
+- The function accepts `userId: v.string()` but `emails.userId` could be a Convex ID string. This depends on what was stored. The `by_user` index on emails uses `["userId"]` which stores whatever was passed during insert -- in `unipile.ts:183` it stores `args.userId` which comes from the action caller, while in `sync.ts:114` it stores `args.userId` from the public mutation. Inconsistent ID types across code paths.
+
+---
+
+### 9. CONCURRENCY / IDEMPOTENCY ISSUES
+
+**9a. `registerUnipileAccount` can create duplicate mailboxes**
+- File: `convex/webhook.ts:428-457`
+- If the `unipileAccountCallback` is called twice rapidly (Unipile retries, or user completes auth twice), the `existingMailbox` check at line 428-433 could pass both times before either insert completes (though Convex mutations are serialized, the `scheduler.runAfter` at line 137 could trigger concurrent backfills).
+
+**9b. `backfillEmails` is not idempotent with `storeEmail`'s ID generation**
+- File: `convex/unipile.ts:111`
+- `externalId: email.id || \`uni-${Date.now()}-...\`` -- if `email.id` is undefined (which is checked with `||`), a new random ID is generated each time. If `backfillEmails` runs twice (e.g., due to the scheduler retry), emails without an `id` field from Unipile will be duplicated with different externalIds.
+
+**9c. `sendEmail` creates task before send, cannot atomically roll back on failure**
+- File: `convex/sendApi.ts:127-195` + `199-215`
+- For sync sends, the mutation `createSendEnrollment` or `createStandaloneTask` is called BEFORE the actual `callUnipileSend`. If `callUnipileSend` succeeds but `markTaskSent` fails (e.g., Convex error), the email is sent but the task remains in "pending" state, potentially causing a re-send on the next cron tick.
+
+---
+
+### 10. RESOURCE / PERFORMANCE ISSUES
+
+**10a. N+1 query pattern in `backfillEmails`**
+- File: `convex/unipile.ts:100-128`
+- Each email is stored via a separate `ctx.runMutation(internal.unipile.storeEmail, ...)` call inside a loop. For 5000 emails, this is 5000 mutation calls from within a single action. This is extremely slow and could hit Convex action time limits.
+
+**10b. `processReply` nested loops with no limits**
+- File: `convex/webhook.ts:197-261`
+- For each active enrollment, it fetches ALL tasks and ALL drafts (potentially hundreds). With multiple active enrollments for the same contact, this becomes O(enrollments * (tasks + drafts)) DB operations in a single mutation.
+
+**10c. `updateAccountStatus` nested loops**
+- File: `convex/webhook.ts:324-361`
+- For each affected mailbox, it queries ALL active enrollments for the user (not just those on the affected mailbox), then filters in JS. With many enrollments, this reads far more data than necessary.
+
+---
+
+### 11. DATA INTEGRITY
+
+**11a. `canceledReason` set to `undefined` in `registerUnipileAccount`**
+- File: `convex/webhook.ts:516`
+- `canceledReason: undefined` is passed to `ctx.db.patch()`. In Convex, patching with `undefined` removes the field (equivalent to `delete`). This is likely intended to clear the reason, but the schema defines `canceledReason: v.optional(v.string())` so passing `undefined` actually deletes the field rather than setting it to empty string. This is semantically correct but inconsistent with other code paths that set `canceledReason` to a string.
+
+**11b. `updateUserToken` skips name update when name is empty string**
+- File: `convex/auth.ts:59`
+- `if (args.name)` is falsy for empty string `""`. If Google returns `name: ""`, the user's name won't be updated. This is probably fine but means a user can never have their name cleared.
+
+**11c. sync version off-by-one in `processReply`**
+- File: `convex/webhook.ts:194,260,265`
+- `version` starts at `(lastSyncVersion ?? 0) + 1` (line 194), then is incremented at the END of each enrollment loop iteration (line 260: `version++`). The final `version` written to syncState (line 265) is therefore `initialVersion + activeEnrollments.length`. But within each loop iteration, ALL patches for that enrollment (enrollment patch, task patches, draft patches, reply event insert) all share the SAME version number. This means multiple rows have the same syncVersion, which could confuse sync logic that expects each change to have a unique version.
+
+---
+
+### Summary of Critical Issues
+
+| Priority | Issue | File:Line |
+|----------|-------|-----------|
+| **CRITICAL** | Empty token matches logged-out users | auth.ts:69 + auth.ts:36-40 |
+| **CRITICAL** | Public mutations/queries with no auth (enrollments.ts, sync.ts, unipile.ts) | enrollments.ts:14, sync.ts:33,72, unipile.ts:6,57 |
+| **CRITICAL** | `pushLocalState` accepts `v.any()` data with no auth | sync.ts:72,79 |
+| **CRITICAL** | Unipile webhook callback has no authentication | webhook.ts:107-148 |
+| **HIGH** | Gmail webhook has no Pub/Sub JWT verification | gmailWebhook.ts:14 |
+| **HIGH** | Unipile webhook secret check bypassed when env var missing | webhook.ts:8-14 |
+| **HIGH** | `listEmailsAfterVersion` scans all users' emails | connect.ts:225-242 |
+| **HIGH** | `getWorkingLinkedInAccount` ignores user-account cross-check | enrich.ts:48-49 |
+| **HIGH** | `googleAuth` accesses email before null check | auth.ts:96-101 |
+| **HIGH** | Task claimed then sent non-atomically (double-send risk) | dispatcher.ts:85-107 |
+| **MEDIUM** | No pagination limits on backfill/enrich loops | unipile.ts:74, enrich.ts:112 |
+| **MEDIUM** | `countSendsForDay` may use index range queries incorrectly | helpers.ts:80-88 |
+| **MEDIUM** | `processReply` matches by contact only, not thread | webhook.ts:176-180 |
+| **MEDIUM** | syncVersion race in `registerUnipileAccount` double-read | webhook.ts:436-488 |
+| **LOW** | Token generation modulo bias | auth.ts:14-19 |
+| **LOW** | Pervasive `any` types reduce type safety | multiple files |
+| **LOW** | Multiple sync versions sharing same value in `processReply` | webhook.ts:194-265 |</result>
+<usage><total_tokens>64693</total_tokens><tool_uses>15</tool_uses><duration_ms>167800</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/adebe222c2eaa68ed.output
+
+---
+
+<task-notification>
+<task-id>aac284819e8b8f447</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/aac284819e8b8f447.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze internal/ domain packages edge cases" completed</summary>
+<result>Now I have read every file. Let me compile the comprehensive edge case analysis.
+
+---
+
+Here is the structured list of every edge case found, organized by file and category.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/check.go`
+
+**1. Unhandled errors (lines 17-18, 20-21)**
+The return values of `d.QueryRow(...).Scan(...)` on lines 17-18 and 20-21 are completely ignored. If the query fails or the scan fails, `DailyAvg7d` and `DailyAvg30d` silently remain `0.0` with no indication of failure.
+
+**2. Silent failure / inconsistent error handling (line 25-26)**
+On line 25, if `d.Query(...)` returns an error, the function returns `h, nil` -- it swallows the error and returns a partial result as if everything succeeded. The caller cannot distinguish "no data" from "query failure."
+
+**3. Unhandled error (line 32)**
+`rows.Scan(&toJSON)` on line 32 ignores the error. If the scan fails (e.g., NULL value), `toJSON` will be empty and `json.Unmarshal` will silently fail, under-counting unique recipients.
+
+**4. Missing rows.Err() check (after line 39)**
+After the `for rows.Next()` loop, `rows.Err()` is never checked. Iteration errors are silently lost.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/classify.go`
+
+**5. Missing input validation (line 12)**
+No validation on `updates` entries: `u.Class` is not validated against a known set of classes, and `u.ID` is not checked for empty string. An empty `u.ID` would silently match zero rows.
+
+**6. Missing validation on Confidence range (line 8-9)**
+`Confidence` is a `float64` with no bounds checking. Values like -1.0 or 999.0 would be stored without error.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/classify_auto.go`
+
+**7. Logic error in personal email classification (lines 152-161)**
+The personal domain heuristic only fires when both sender AND recipient are personal domains. But if the sender is from a business domain (e.g., `me@acme.com`) sending to a personal domain (`friend@gmail.com`), this is arguably personal too but won't be classified as such. The comment on line 155 says "Sender is also from a personal domain -> personal" which is intentional, but it means business-to-personal emails are left for Claude unnecessarily.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/client.go`
+
+**8. No token refresh handling (line 48)**
+`oauthCfg.Client(context.Background(), &token)` will attempt to refresh the token if expired, but if the refresh fails, the error only surfaces on the first API call, not at client creation time. More critically, the refreshed token is never persisted back to disk, so the next call to `NewClient` will use the stale token file again, creating repeated refresh attempts.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/context.go`
+
+**9. Unhandled errors (lines 37-38)**
+Both `d.QueryRow("SELECT COUNT(*) FROM emails").Scan(...)` calls on lines 37-38 ignore errors. If the `emails` table doesn't exist or the DB is corrupt, these silently produce `0`.
+
+**10. Unhandled error (line 49)**
+`rows.Scan(&toJSON)` error is ignored inside the loop.
+
+**11. Missing rows.Err() check (after line 59)**
+After the `rows.Next()` loop on line 47, `rows.Err()` is never checked.
+
+**12. Unhandled errors (lines 71-73, 76-82)**
+Both `d.QueryRow(...)` calls for sending patterns ignore scan errors. If there are zero outbound emails, the `MAX(1, ...)` prevents division by zero in SQL, but the scan error is still unhandled.
+
+**13. Unhandled error (line 90)**
+`subRows.Scan(&subj)` ignores error.
+
+**14. Missing rows.Err() check (after line 92)**
+After the `subRows.Next()` loop, `rows.Err()` is never checked.
+
+**15. Function never returns an error (line 95)**
+`GenerateContext` always returns `nil` error, even if every query fails. The function signature suggests errors are possible but they're never propagated.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/list.go`
+
+**16. Offset without Limit (lines 39-44)**
+If `opts.Offset > 0` but `opts.Limit == 0`, the offset is silently ignored. This could surprise callers who set an offset expecting pagination.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/replies.go`
+
+**17. No nil check on parseMessage result (line 50)**
+`parseMessage(thread.Messages[i])` could theoretically return issues if `msg.Payload` is nil (see finding #26 below for `parseMessage`). If `thread.Messages[i].Payload` is nil, accessing `msg.Payload.Headers` in `parseMessage` will panic.
+
+**18. Logic error in latestKnownThreadTime (lines 117-128)**
+The function returns the FIRST parseable timestamp it finds, not the LATEST. If `LastReplyAt` is "2026-03-20" and `LastSentAt` is "2026-03-22", it returns the reply time (earlier), missing messages between the two dates. The candidates should be compared, not short-circuited.
+
+**19. Classification false positives in classifyReply (lines 97-115)**
+The classifier checks if substrings like `"yes"` appear anywhere in the concatenation of email+subject+snippet. A snippet containing "synthesis" or "analyser" would match "yes". The email address "odyssey@company.com" would match "yes". The word "unreachable" doesn't trigger anything, but "not interested" is fine. The `"contact "` match (with trailing space) for "referral" could still false-positive on "contact us at support@..." which isn't a referral.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/send.go`
+
+**20. Email header injection (lines 56-68)**
+`buildRawMessage` directly concatenates user-provided `from`, `opts.To`, `opts.Cc`, and `opts.Subject` into MIME headers without sanitizing for newline characters. A subject like `"Hello\r\nBcc: secret@evil.com"` would inject an additional header. While Gmail's API may reject malformed messages, this is a header injection vulnerability at the construction level.
+
+**21. Missing `from` validation (line 26)**
+The `from` parameter is not validated for empty string. If empty, the email would have `From: \r\n` which is malformed.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/stats.go`
+
+**22. Unhandled errors (lines 29, 40, 47)**
+`d.QueryRow("SELECT COUNT(*) FROM emails").Scan(...)` on line 29 ignores errors. `rows.Scan(&class, &count)` on line 40 ignores errors (could produce zero-value class name, mapping to `stats.ByClass[""]`). `d.QueryRow("SELECT MIN(...), MAX(...)").Scan(...)` on line 47 ignores errors.
+
+**23. Missing rows.Err() check (after line 45)**
+After `rows.Next()` loop, `rows.Err()` is not checked.
+
+**24. Unhandled errors in ThisWeek (lines 64-67, 69-73)**
+Both `QueryRow` calls in `ThisWeek` ignore scan errors.
+
+**25. Logic error in UniqueContacts (lines 69-73)**
+`COUNT(DISTINCT to_emails)` counts distinct JSON strings, not distinct email addresses. Two emails to the same person with slightly different JSON (e.g., whitespace differences) would count as two "unique contacts."
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/sync.go`
+
+**26. Nil pointer dereference in parseMessage (line 184)**
+`msg.Payload.Headers` is accessed on line 184 without checking if `msg.Payload` is nil. If the Gmail API returns a message with nil Payload (e.g., for deleted/draft messages), this will panic.
+
+**27. Unhandled error on cursor query (line 40)**
+`d.QueryRow("SELECT sync_cursor FROM connectors WHERE id = 'gmail'").Scan(&cursor)` ignores errors. If the connectors table doesn't exist, this silently proceeds with an empty cursor.
+
+**28. Unhandled error on connector upsert (lines 95-101, 161-167)**
+The `d.Exec(...)` on lines 95-101 and 161-167 ignore the return error. If the upsert fails, the sync cursor is never saved, meaning the next sync will re-process everything.
+
+**29. Silent failure on message store (lines 79-83)**
+When `StoreEmail` fails on line 79, the error is printed to stdout and the message is skipped. But the `result.Stored` counter is not incremented, so the final `total_synced` update will undercount. More importantly, `fmt.Printf` goes to stdout, which could corrupt `--format json` output.
+
+**30. Date parsing coverage gap (lines 195-201)**
+`parseMessage` only tries `RFC1123Z` and one additional format for dates. Gmail may return dates in many formats (e.g., `"2 Jan 2006 15:04:05 -0700"` without day-of-week, or with timezone abbreviation like `"Mon, 2 Jan 2006 15:04:05 MST"`). Unparseable dates are stored raw, which may then fail in `parseStoredEmailTime` later.
+
+**31. `append` modifies the input slice (line 219)**
+`recipients := append(parseRecipients(e.ToEmails), parseRecipients(e.CcEmails)...)` -- if `parseRecipients(e.ToEmails)` returns a slice with spare capacity, this `append` would mutate the underlying array of the To-recipients slice. In practice this is unlikely to cause issues since the returned slice isn't used elsewhere, but it's a latent bug pattern.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/tasks.go`
+
+**32. Off-by-one / imprecision in wholeDaysBetween (lines 138-140)**
+`int(to.UTC().Sub(from.UTC()).Hours() / 24)` truncates rather than rounds. For example, 23 hours 59 minutes would yield 0 days. When `DaysUntilDue` is used to determine if a follow-up is overdue, this imprecision could delay follow-ups by almost a full day.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/email/watch.go`
+
+**33. Silent failure on file write (line 78)**
+`os.WriteFile(watchExpiryPath, ...)` error is ignored with `_ =`. If the write fails (permissions, disk full), the next call to `RenewWatchIfNeeded` will re-register unnecessarily, potentially causing repeated Watch calls.
+
+**34. Missing directory creation (line 78)**
+If the parent directory of `watchExpiryPath` doesn't exist, `os.WriteFile` will fail silently (error is discarded per finding #33).
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/enrich.go`
+
+**35. SQL injection via column name (line 215)**
+In `Stats()`, `fmt.Sprintf("SELECT COUNT(*) FROM contacts WHERE %s != '' AND %s IS NOT NULL", col, col)` uses the `col` variable in a format string. While `col` comes from a hardcoded map (`fieldColumns`), the pattern is fragile -- if someone adds a user-controlled field to the map, it becomes SQL injection. The `enrichableColumns` map in types.go has the same pattern.
+
+**36. SQL injection via column name in updateContactFields (line 294, line 316)**
+`fmt.Sprintf("%s = ?", col)` and `fmt.Sprintf("UPDATE contacts SET %s WHERE email = ?", ...)` build SQL from map values. Same note as above -- currently safe because the map is hardcoded, but the pattern is fragile.
+
+**37. Map iteration order non-determinism (line 289-296)**
+`updateContactFields` iterates over `fields` map, building SET clauses and args in non-deterministic order. While functionally correct, it means the same logical update can produce different SQL statements each time, defeating any query cache.
+
+**38. Enrichment sources overwrite instead of merge (lines 306-309)**
+`updateContactFields` replaces `enrichment_sources` entirely with the current providers list. If a contact was previously enriched by provider A, and now provider B fills a field, the sources list will show only `["B"]`, losing the history that A also contributed data.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/freeapis.go`
+
+**39. Global mutable HTTP client (line 12)**
+`var freeClient = &http.Client{Timeout: 15 * time.Second}` is a package-level mutable global. While `http.Client` is safe for concurrent use, the `Timeout` could be changed if anyone modifies it. Minor concern.
+
+**40. Nil pointer dereference on http.NewRequest error (lines 104, 128-129, 161)**
+`req, _ := http.NewRequest("GET", orgURL, nil)` ignores the error. If the URL is somehow invalid, `req` would be nil, and `req.Header.Set(...)` on the next line would panic. Same pattern on lines 128-129 and 161.
+
+**41. HN StoryID not populated (lines 66-77)**
+`SearchHackerNews` builds `HackerNewsMention` structs but never sets `StoryID`, despite the field existing in the struct and `ObjectID` being present in the raw response.
+
+**42. No response body size limit (lines 39-43, 108-111, 132-136, 164-167)**
+All HTTP responses are read fully via `json.NewDecoder(resp.Body).Decode(...)`. A malicious or buggy API could return a massive response body, potentially causing OOM. No `io.LimitReader` is used.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/provider.go`
+
+**43. Relative path for local providers (line 63)**
+`filepath.Join(".nurge", "providers")` uses a relative path. If the working directory is not the project root when this function is called, it will look in the wrong location.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/save.go`
+
+**44. SQL injection via column name (line 69)**
+Same pattern as enrich.go: `fmt.Sprintf("%s = ?", col)` with `col` from `enrichableColumns` map. Currently safe but fragile.
+
+**45. CacheKey error ignored (line 102)**
+`inputKey, _ := assembly.CacheKey(input.Provider, input.ContactEmail)` discards the error. If `CacheKey` fails, `inputKey` could be empty, potentially colliding with other cache entries or causing constraint violations.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/enrich/waterfall.go`
+
+**46. Inconsistency between AllEnrichableFields and enrichableColumns (line 18-22)**
+`AllEnrichableFields()` includes `"headline"` and `"location"` which are NOT in `enrichableColumns` (types.go). If a provider tries to fill these fields, `updateContactFields` will silently skip them since the column mapping doesn't exist.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/metrics/metrics.go`
+
+**47. Race condition on CountingWriter.Write (lines 221-227)**
+The `Write` method calls `cw.w.Write(p)` outside the lock, then updates `cw.count` under the lock. If two goroutines call `Write` concurrently, and the underlying writer is not thread-safe, data corruption can occur in the underlying writer. The lock only protects `count`, not the write itself.
+
+**48. Integer division truncation for token estimate (line 71)**
+`tokens := outputBytes / 4` for small outputs (e.g., 3 bytes) gives 0 tokens. This is documented as "rough estimate" but consistently underestimates.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/pipeline/status.go`
+
+**49. All QueryRow errors silently ignored (lines 118-186)**
+Every `d.QueryRow(...).Scan(...)` call in `Status()` ignores errors. If any table doesn't exist (e.g., `research_dossiers`, `reply_events`, `mailbox_daily_usage`, `follow_up_tasks`, `mailboxes`), the function silently returns zeros. The function signature returns an error, but it's never set.
+
+**50. Incorrect "Active" calculation (line 146)**
+`ps.NewOutreach.Active = ps.Pipeline.Sourced - ps.Pipeline.Contacted` can go negative if contacts were imported and immediately enrolled. No `max(0, ...)` guard.
+
+**51. queryDecayingSignals assumes `signals` column exists (line 329)**
+If the `contacts` table doesn't have a `signals` column (e.g., before a migration), the query silently returns nil, which is acceptable, but it could mask real errors.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/helpers.go`
+
+**52. looksLikeURL false positive (lines 31-41)**
+`looksLikeURL("file.txt")` returns `true` because it contains a dot, no spaces, and no `@`. This means filenames like `report.pdf` or version numbers like `v2.1` are misdetected as URLs. The `DetectInputType` function checks `.csv` suffix first, but other file extensions would route to `InputWebsite`.
+
+**53. isHexOrDigits filters too aggressively in slugToName (lines 92-103)**
+LinkedIn slugs like `"john-doe-12345"` have their trailing segment stripped, but a name like `"Ed Deedee"` with slug `"ed-deedee"` would keep `"deedee"` since it contains non-hex characters. However, legitimate name segments that happen to be all hex like `"Ada"` or `"Abcdef"` (len >= 5) would be incorrectly stripped.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve_csv.go`
+
+**54. CSV not in a transaction (entire function)**
+`resolveCSV` performs multiple `d.Exec` calls (creates, updates, merges) without a transaction. If the function fails partway through (e.g., on row 500 of 1000), the first 499 contacts are committed but the result returns an error. The caller has no way to know which rows were processed, and rerunning would try to create duplicates (though the dedup logic may handle some of these).
+
+**55. mergeUpdateSQL name-only update semantics (line 316)**
+The merge SQL `name = CASE WHEN ? = '' THEN name ELSE ? END` will OVERWRITE the existing name if the new value is non-empty, even if the existing name is better (e.g., "Alice Smith" overwritten by "Alice"). This is "last write wins" which may not be desirable for merge operations.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve_email.go`
+
+No additional findings beyond what's covered by shared helpers.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/resolve_linkedin.go`
+
+**56. resolveLinkedInCompany doesn't use the database (line 80)**
+`resolveLinkedInCompany(input string)` doesn't accept a `*sql.DB` parameter and doesn't check if the company already exists in the database. It always returns a fresh result suggesting "find_people." Meanwhile, `resolveLinkedInPerson` correctly checks the DB for existing contacts.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/resolve/types.go`
+
+**57. DetectInputType ambiguity (lines 84-104)**
+The detection order means that a file path like `linkedin.com/in/john-doe.csv` would be detected as `InputCSV` (checked first), not LinkedIn. Similarly, an email like `user@linkedin.com/in/something` would match LinkedIn before email. The precedence logic is brittle.
+
+---
+
+## `/Users/rejoesudarsan/Projects/nurgesh/internal/scraper/scraper.go`
+
+**58. No response body size limit (line 76)**
+`io.ReadAll(resp.Body)` reads the entire response into memory with no size limit. A page returning 1GB of HTML would consume 1GB of memory.
+
+**59. Truncation on multi-byte character boundary (lines 104-106)**
+`full[:maxContentChars]` slices a string by byte index, not rune index. If `maxContentChars` falls in the middle of a multi-byte UTF-8 character, the resulting string will contain an invalid UTF-8 sequence followed by the "..." character.
+
+**60. No redirect limit (line 57)**
+`&http.Client{Timeout: 15 * time.Second}` uses the default redirect policy (up to 10 redirects). While 10 is reasonable, there's no explicit control. A redirect loop would consume the timeout but not cause other issues.
+
+**61. Relative URLs in links (lines 180-196)**
+`extractLink` captures `href` values as-is, which may be relative paths (e.g., `/about`, `../page`). These are returned in `Link.Href` without being resolved against the base URL, making them unusable to callers without additional processing.
+
+**62. Double-counting heading text in content (lines 130-135)**
+Headings (h1-h3) append their text to both `r.Headings` AND `*parts` (which becomes `r.Content`), then `return` without visiting children. But the heading text also counts in `countJSON` for token estimation. This double-counts headings in the token estimate.
+
+---
+
+## Summary Statistics
+
+| Category | Count |
+|----------|-------|
+| Unhandled errors | 18 |
+| Nil pointer dereferences | 2 |
+| Missing input validation | 4 |
+| Resource leaks (unbounded reads) | 3 |
+| Race conditions | 1 |
+| Silent failures | 10 |
+| Off-by-one / truncation errors | 2 |
+| Logic errors | 6 |
+| Missing boundary checks | 2 |
+| Inconsistent error handling | 4 |
+| Potential panics | 3 |
+| SQL/header injection | 5 |
+| File path issues | 2 |
+
+The most impactful findings are:
+
+- **#20 (send.go)**: Email header injection via unsanitized user input in MIME headers
+- **#26 (sync.go)**: Nil pointer dereference if `msg.Payload` is nil in `parseMessage`
+- **#18 (replies.go)**: `latestKnownThreadTime` returns the first parseable time, not the latest, potentially re-processing or missing messages
+- **#8 (client.go)**: Refreshed OAuth tokens never persisted back to disk
+- **#54 (resolve_csv.go)**: Multi-row CSV import without a transaction leaves partial state on failure
+- **#58 (scraper.go)**: Unbounded `io.ReadAll` on HTTP response body</result>
+<usage><total_tokens>94222</total_tokens><tool_uses>38</tool_uses><duration_ms>184157</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/aac284819e8b8f447.output
+
+---
+
+<task-notification>
+<task-id>a1be808d617c4e284</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a1be808d617c4e284.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze internal/ core packages edge cases" completed</summary>
+<result>I've now read every file. Let me compile my comprehensive analysis of edge cases and bugs found.
+
+---
+
+Here is the structured list of every edge case found across all files:
+
+## internal/account/auth.go
+
+**1. Swallowed error from rand.Int (line 179)**
+```go
+n, _ := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
+```
+If `rand.Int` fails, `n` is nil and `n.Int64()` on line 180 will panic with a nil pointer dereference. The error should be checked.
+
+**2. Potential nil pointer dereference when both resultCh and errCh could race (lines 106-151)**
+If the callback server sends on both channels nearly simultaneously (e.g., error during handler after sending partial result), only one branch of the select executes but the other channel's value is leaked. Not a crash, but a goroutine leak in the callback server if it blocks on send.
+
+**3. CSRF state comparison uses `!=` not constant-time comparison (line 109)**
+```go
+if result.Values.Get("state") != state {
+```
+In contrast, the connector package correctly uses `hmac.Equal` in `oauth.go:30`. This is a timing side-channel for CSRF state comparison.
+
+## internal/account/convex_api.go
+
+**4. Unsanitized provider parameter in URL query string (line 176)**
+```go
+http.NewRequest("GET", c.baseURL+"/api/connection-status?provider="+provider, nil)
+```
+The `provider` string is not URL-encoded. If it contains special characters (e.g., `&`, `=`, `#`), it could corrupt the URL or be exploited. Should use `url.QueryEscape(provider)` or `url.Values`.
+
+**5. enrichPost creates a new HTTP client ignoring c.httpClient (lines 296-297)**
+```go
+client := &http.Client{Timeout: 120 * time.Second}
+```
+The method creates a separate `http.Client` with a 120-second timeout instead of using `c.httpClient` (which has a 10-second timeout). This is intentional for long enrichment calls, but it bypasses any custom transport/configuration on the client, and if enrichment is called with the Convex client, the caller may expect the client's configuration to apply.
+
+**6. DisconnectProvider silently ignores json.Marshal error (line 258)**
+```go
+body, _ := json.Marshal(map[string]string{"provider": provider})
+```
+While `json.Marshal` on a `map[string]string` is unlikely to fail, the error is discarded. If it did fail, the nil `body` would be passed to `bytes.NewReader(nil)`, sending a request with no body.
+
+**7. No HTTP status code check before JSON parsing in multiple methods**
+`SendEmail` (line 80), `ConnectGmail` (line 119), `ConnectLinkedIn` (line 156): these methods attempt to parse the response body as JSON without checking `resp.StatusCode` first. If the server returns a 500 with HTML, `json.Unmarshal` will fail with a confusing error message instead of reporting the HTTP status.
+
+**8. SyncEmails uses float64 for version (line 223)**
+```go
+func (c *ConvexClient) SyncEmails(token string, afterVersion float64) (*SyncEmailsResponse, error) {
+```
+Using `float64` for a version number can lose precision for large values (> 2^53). The `ConvexEmail.SyncVersion` is also `float64`. However, `PullResponse.SyncVersion` and all DB fields use `int64`. This type mismatch could cause silent precision loss.
+
+## internal/account/convex.go
+
+**9. ValidateToken returns nil User on success if server sends Valid:true but no User (line 75)**
+```go
+return result.User, nil
+```
+If the server returns `{"valid": true}` without a `user` field, `result.User` is nil. Callers that dereference the returned `*User` without a nil check will panic.
+
+## internal/account/google.go
+
+**10. RedirectURL with port 0 in RefreshIDToken (line 82)**
+```go
+cfg, err := googleOAuthConfig(0)
+```
+This sets `RedirectURL` to `http://localhost:0/callback`. While this doesn't matter for refresh-only flows (the redirect URL is not used), it could cause issues if the oauth2 library sends it as part of the refresh request and the provider rejects it for not matching the original redirect URI.
+
+## internal/account/token.go
+
+**11. SaveAuth is not atomic (line 71)**
+```go
+if err := os.WriteFile(path, data, 0600); err != nil {
+```
+`os.WriteFile` directly writes to the target file. If the process is interrupted mid-write, the auth file will be corrupt. The project's `CLAUDE.md` mentions atomic write-to-temp-then-rename for config writes (commit `5e63ab1a`), but this pattern is not applied to auth files.
+
+## internal/assembly/assembler.go
+
+**12. Cache key collision if prospect email contains ":" (line 19)**
+```go
+cacheKey := string(req.Task) + ":" + req.Prospect
+```
+If a prospect email contains `:`, the cache key could collide with a different task:prospect combination. For example, `"outbound:a:b@x.com"` could be either task="outbound" prospect="a:b@x.com" or task="outbound:a" prospect="b@x.com". In practice, task types don't contain colons, but email addresses could (though unlikely).
+
+**13. TouchAtom error silently ignored (line 74)**
+```go
+_ = TouchAtom(database, best.ID)
+```
+While this is a non-critical usage tracking update, if the DB is in a bad state, this silently hides the signal.
+
+**14. Cache stores assembled context without tracking which atoms/learnings contributed (line 134)**
+If underlying data changes (new learnings, updated atoms) within the cache TTL (5 minutes), stale context is returned. The cache invalidation is manual only (`InvalidateCache()`), not triggered by data mutations.
+
+## internal/assembly/cache.go
+
+**15. Expired entries not evicted from AssemblyCache (line 107)**
+```go
+if !ok || time.Now().After(entry.expiresAt) {
+    return "", false
+}
+```
+When a `Get` finds an expired entry, it returns a miss but does not delete the expired entry from the map. Over time, if many unique keys are set and expire, the map grows unboundedly. There is no background eviction or size limit.
+
+## internal/assembly/helpers.go
+
+**16. pickBestAtom does not handle empty atoms slice (line 114)**
+```go
+func pickBestAtom(atoms []KnowledgeAtom, scopes []string) KnowledgeAtom {
+    if len(atoms) == 1 {
+        return atoms[0]
+    }
+    best := atoms[0]
+```
+If `atoms` is empty (length 0), `atoms[0]` on line 125 will panic with an index out of range. The caller (`assembler.go:68`) guards with `if len(atoms) > 0`, but the function itself is unprotected.
+
+**17. loadConfigContext silently swallows all errors (line 262)**
+```go
+cfg, err := project.Load()
+if err != nil {
+    return ""
+}
+```
+Any config loading failure (corrupt file, permission error) is silently ignored. This means the assembled context will silently lack configuration information without any indication.
+
+## internal/assembly/knowledge.go
+
+**18. SeedAtom falls through to seedAtomFallback on ANY Exec error, not just constraint violations (line 73)**
+```go
+if err != nil {
+    return seedAtomFallback(db, atomType, scope, content, source)
+}
+```
+If the `INSERT ... ON CONFLICT` fails for a reason other than a missing unique index (e.g., disk full, DB locked), the fallback is attempted. The fallback might then also fail, masking the original error.
+
+**19. SeedAtom uses LastInsertId which is unreliable for upserts (line 75)**
+```go
+return result.LastInsertId()
+```
+When the `ON CONFLICT DO UPDATE` branch is taken (update, not insert), `LastInsertId()` returns the rowid of the last successful insert, which may be a stale value from a previous operation. The caller gets back a potentially incorrect ID.
+
+## internal/assembly/resume.go
+
+**20. rows.Scan errors silently continued in activeSequenceSummary (line 90)**
+```go
+if err := rows.Scan(&name, &count); err != nil {
+    continue
+}
+```
+Scan errors are silently skipped. If the schema changes or data is corrupt, the summary will silently return partial data.
+
+## internal/assembly/templates.go and templates_test.go
+
+**21. Test asserts 16 templates but allSkillDefs has 16 entries while code/spec says 17 (templates_test.go:10)**
+```go
+if got := len(templates); got != 16 {
+```
+The comment in `TestThinSkillTemplateNames` says "The 17th is covered by having 17 defs total" but then `allSkillDefs` only has 16 entries and the test asserts 16. If a 17th skill was intended, it's missing. If 16 is correct, the spec reference to "17 skills" is out of date.
+
+## internal/assembly/types.go
+
+**22. defaultCache is a package-level global with no synchronization concern given current usage, but shared mutable global state (line 104)**
+```go
+var defaultCache = NewAssemblyCache(5 * time.Minute)
+```
+The `AssemblyCache` itself is thread-safe (uses `sync.RWMutex`), but the package-level variable `defaultCache` could be replaced concurrently if any code reassigns it (not currently the case, but fragile).
+
+## internal/automation/wrapper.go
+
+**23. No validation that executable path actually exists or is executable (line 57)**
+```go
+executablePath, err := filepath.Abs(opts.ExecutablePath)
+```
+`WriteDispatcherAssets` resolves the path but never checks the file exists or is executable. The generated script will fail at runtime with a confusing error.
+
+**24. launchdLabel could produce empty label after sanitization (line 248)**
+```go
+base = strings.Trim(base, "-")
+```
+If `filepath.Base(projectRoot)` is all special characters (e.g., `"!!!"`), `base` becomes empty after the `strings.Map` + `strings.Trim`. The function handles this with `if base == "" { base = "project" }` on line 252-254, so this is actually handled. No issue.
+
+## internal/connector/credentials.go
+
+**25. LoadCredentials uses relative paths, making it CWD-dependent (line 15)**
+```go
+localPath := fmt.Sprintf(".nurge/connectors/%s/credentials.json", connectorID)
+```
+This uses a relative path, which depends on the current working directory. If the binary is invoked from a different directory, credentials won't be found. The same pattern appears in `generic_auth.go:56-57` and `generic_auth.go:97-98`.
+
+**26. Path traversal via connectorID (line 15)**
+```go
+localPath := fmt.Sprintf(".nurge/connectors/%s/credentials.json", connectorID)
+```
+If `connectorID` contains `../`, an attacker could read arbitrary files. For example, `connectorID = "../../etc/passwd"` would resolve to `.nurge/connectors/../../etc/passwd/credentials.json`. The same pattern appears in `generic_auth.go:56`, `generic_auth.go:97`, and multiple other places. The YAML validator does not sanitize the `id` field for path separators.
+
+## internal/connector/embed.go
+
+**27. BundledCredentials silently ignores ReadFile error (line 10)**
+```go
+var BundledCredentials, _ = bundledDefinitions.ReadFile("definitions/gmail_credentials.json")
+```
+If the bundled file is missing (e.g., not included in the build), `BundledCredentials` will be `nil` with no error. Callers checking `len(BundledCredentials) > 0` will correctly skip it, but there's no build-time or init-time warning.
+
+## internal/connector/generic_auth.go
+
+**28. connectAPIKey reads API key from stdin unsafely with fmt.Scanln (line 89)**
+```go
+fmt.Scanln(&key)
+```
+`fmt.Scanln` reads until a space or newline. If the API key contains spaces, only the part before the first space is captured. Should use `bufio.Scanner` or `fmt.Scan` with a reader to read the full line.
+
+**29. Same fmt.Scanln issue for webhook URL (line 145), client ID (line 213), and client secret (line 215)**
+All interactive credential reads use `fmt.Scanln` which truncates at spaces.
+
+**30. SaveGrantedScopes error silently ignored (line 67)**
+```go
+_ = SaveGrantedScopes(tokenDir, g.def.Auth.Scopes)
+```
+If saving scopes fails, the connection succeeds but scope tracking is broken, leading to potential false positives in `CheckScopesSufficient`.
+
+**31. loadGoogleCredentials falls back to BundledCredentials for all google_json connectors, not just Gmail (line 244)**
+```go
+if len(BundledCredentials) > 0 {
+    return BundledCredentials, nil
+}
+```
+`BundledCredentials` is specifically `gmail_credentials.json`, but `loadGoogleCredentials` is called for any connector with `credentials.source == "google_json"`. If a non-Gmail connector uses `google_json`, it would incorrectly receive Gmail's credentials.
+
+## internal/connector/generic_verify.go
+
+**32. runVerify creates a token source from cfg but falls back to original token, then creates client from the original token source (lines 22-31)**
+```go
+freshToken, err := ts.Token()
+if err != nil {
+    freshToken = token
+}
+...
+client := oauth2.NewClient(ctx, ts)
+```
+When token refresh fails, `freshToken` is set to the original `token`, but `client` is still created with `ts` (the same token source that just failed). The `client.Do(req)` call will try to refresh again and may fail again, but the URL substitution on line 32 already used `freshToken.AccessToken`. There's an inconsistency between the token used for URL substitution and the one potentially used by the client's automatic token management.
+
+**33. extractAccountField only handles flat JSON (line 108-109)**
+```go
+if v, ok := data[field]; ok && v != nil {
+    return fmt.Sprintf("%v", v), nil
+}
+```
+If the account field is nested (e.g., `user.email`), it won't be found. The fields are dot-separated in some APIs but this function only looks at top-level keys.
+
+## internal/connector/health.go
+
+**34. fileExists returns true for directories (line 140-143)**
+```go
+func fileExists(path string) bool {
+    _, err := os.Stat(path)
+    return err == nil
+}
+```
+If `token.json` is accidentally a directory (e.g., created by `os.MkdirAll` with wrong path), `fileExists` returns true, and `validateJSON` will fail when trying to read it. The health check would report `HealthTokenCorrupt` instead of a more informative error.
+
+## internal/connector/oauth.go
+
+**35. No context deadline/timeout on OAuthFlow itself (line 53)**
+The function accepts a `ctx` but the `select` on line 81 includes `case <-ctx.Done()`, so if the caller's context has no deadline, the flow relies solely on the 120-second timeout from `ListenAndWait`. If the caller passes `context.Background()`, and the callback server's error channel never fires, the only timeout is the server's internal one. This is fine but worth noting.
+
+## internal/connector/registry.go
+
+**36. Silent skip of invalid bundled definitions (lines 33-35)**
+```go
+yamlDef, err := ParseYAML(data)
+if err != nil {
+    continue // skip invalid bundled defs
+}
+```
+If a bundled YAML definition is malformed, it's silently skipped. This could cause a connector to be mysteriously missing from the registry with no error or warning.
+
+**37. Silent skip of invalid local definitions (line 60)**
+Same issue for project-local definitions. No error or warning is emitted when a user's custom connector YAML is malformed.
+
+**38. typeOrder map returns 0 for unknown types (line 80)**
+```go
+typeOrder := map[string]int{"email": 0, "crm": 1, "enrichment": 2, "sequencing": 3, "webhook": 4}
+```
+Unknown connector types (not in the map) get a default value of 0 (same as "email"), making them sort first alongside email connectors. This is a minor sorting issue.
+
+## internal/connector/yaml.go
+
+**39. Validation sets defaults AFTER validation (lines 76-81)**
+```go
+if err := validateDef(&def); err != nil {
+    return nil, err
+}
+if def.Tier == 0 {
+    def.Tier = 2
+}
+```
+Validation runs before defaults are applied. If validation checked `def.Tier` for any rules (currently it doesn't), the check would see 0 instead of the defaulted value. Currently not a bug, but a maintenance hazard.
+
+**40. No validation of connector ID format (line 89)**
+```go
+if d.ID == "" {
+    return fmt.Errorf("connector definition missing required field: id")
+}
+```
+The ID is checked for emptiness but not for valid characters. IDs with `/`, `\`, `..`, spaces, or special characters could cause path traversal issues when used in file paths (see issue #26).
+
+## internal/db/db.go
+
+**41. Schema executed twice on Open() (lines 27, 47-48)**
+```go
+// In Open():
+if _, err := db.Exec(Schema); err != nil {  // line 27
+
+// In Create():
+db, err := Open()  // calls Exec(Schema) inside Open
+...
+_, err = db.Exec(Schema)  // line 47, executes Schema again
+```
+`Create()` calls `Open()` which already runs `Schema`, then runs `Schema` again. Due to `CREATE TABLE IF NOT EXISTS`, this is harmless but wasteful.
+
+**42. Hardcoded relative path for database (line 11-12)**
+```go
+const dbPath = ".nurge/nurge.db"
+const dsn = "file:.nurge/nurge.db?..."
+```
+Both the existence check and DSN use relative paths. If the working directory changes between calls, different databases could be accessed. This is the same CWD-dependency issue as the connector paths.
+
+## internal/db/migrations.go
+
+**43. SQL injection via table/column names (line 117)**
+```go
+tx.Exec(fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", spec.table, spec.column, spec.columnTypeDDL))
+```
+Table and column names are interpolated directly into SQL. While these values are hardcoded constants (not user input), the pattern is unsafe. If any value ever comes from external input, this becomes exploitable. Same for `hasColumnTx` (line 152):
+```go
+tx.Query(fmt.Sprintf("PRAGMA table_info(%s)", table))
+```
+
+**44. Backfill statements run on every migration, not just when columns are first added (lines 123-134)**
+The backfill `UPDATE` statements (e.g., `UPDATE mailboxes SET warmup_started_at = created_at WHERE warmup_started_at = ''`) run on every `Open()` call, not just when the column is first added. For large tables, this could be slow. The `WHERE warmup_started_at = ''` clause prevents re-updating already-filled values, but the query itself still runs.
+
+**45. DROP INDEX + CREATE UNIQUE INDEX is not atomic with respect to concurrent readers (lines 138-143)**
+```go
+tx.Exec(`DROP INDEX IF EXISTS idx_knowledge_atoms_scope`)
+tx.Exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_knowledge_atoms_scope ON knowledge_atoms(atom_type, scope)`)
+```
+While this runs in a transaction, if there are duplicate `(atom_type, scope)` rows in `knowledge_atoms` (from before the unique constraint), the `CREATE UNIQUE INDEX` will fail, rolling back the entire migration transaction and preventing the database from opening. No migration logic de-duplicates existing rows first.
+
+**46. No migration version tracking (entire file)**
+The migration system uses column-existence checks (`hasColumnTx`) rather than a migration version table. This means:
+- Migrations are idempotent but checked individually, making startup slower as the migration list grows.
+- There's no way to run one-time migration code (e.g., data transforms) that shouldn't re-run.
+- If a migration is removed from the list, its column still exists but can't be tracked.
+
+## internal/db/schema.go
+
+**47. contacts table UNIQUE(source, email) allows same email from different sources without dedup (line 56)**
+```go
+UNIQUE(source, email)
+```
+The same email address can exist in the contacts table multiple times if it comes from different sources (e.g., "gmail" and "hubspot"). Assembly's `getContact` queries by email only (`WHERE email = ?`), which could return the wrong row if there are duplicates from different sources. `QueryRow` returns one arbitrary match.
+
+**48. No index on emails(from_email) or emails(to_emails) (schema.go)**
+The emails table has indexes on `class`, `date`, and `source`, but not on `from_email` or `to_emails`. Queries filtering by sender or recipient (common for contact-level email lookups) will require full table scans.
+
+---
+
+## Summary by Severity
+
+**High (potential crashes/data corruption):**
+- #1: Nil pointer panic in `generateState` if `crypto/rand` fails
+- #16: Panic if `pickBestAtom` called with empty slice
+- #9: Nil pointer on `ValidateToken` result
+- #45: Migration failure if duplicate atom rows exist
+- #26: Path traversal via unsanitized connector IDs
+
+**Medium (incorrect behavior/data loss):**
+- #3: Non-constant-time CSRF state comparison
+- #4: URL injection via unsanitized query param
+- #8: Float64 precision loss for sync versions
+- #11: Non-atomic auth file writes
+- #18: SeedAtom falls through to fallback on any error
+- #19: Incorrect LastInsertId on upserts
+- #25/42: CWD-dependent relative paths
+- #28-29: Truncated credentials from `fmt.Scanln`
+- #31: Wrong credentials returned for non-Gmail google_json connectors
+- #47: Ambiguous contact lookup with multi-source duplicates
+
+**Low (silent failures, minor inefficiencies):**
+- #6, #13, #27, #30: Silently ignored errors
+- #7: Confusing error messages on non-200 responses
+- #12: Theoretical cache key collision
+- #15: Unbounded in-memory cache growth
+- #17: Silent config load failures
+- #20: Silent scan errors in resume
+- #36-37: Silent skip of invalid connector definitions
+- #41, #44: Redundant work on every startup
+- #43: SQL injection pattern (safe with current hardcoded values)
+- #46: No migration version tracking</result>
+<usage><total_tokens>96018</total_tokens><tool_uses>40</tool_uses><duration_ms>215935</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/a1be808d617c4e284.output
+
+---
+
+continue
