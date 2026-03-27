@@ -4,13 +4,23 @@
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
   "checkpoints_count": 1,
-  "files_touched": null,
+  "files_touched": [
+    "internal/account/convex_api.go",
+    "internal/connector/generic_auth.go",
+    "internal/connector/token_push.go"
+  ],
   "sessions": [
     {
       "metadata": "/af/27dbe4d355/0/metadata.json",
       "transcript": "/af/27dbe4d355/0/full.jsonl",
       "content_hash": "/af/27dbe4d355/0/content_hash.txt",
       "prompt": "/af/27dbe4d355/0/prompt.txt"
+    },
+    {
+      "metadata": "/af/27dbe4d355/1/metadata.json",
+      "transcript": "/af/27dbe4d355/1/full.jsonl",
+      "content_hash": "/af/27dbe4d355/1/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
