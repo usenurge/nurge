@@ -36,6 +36,12 @@
       "transcript": "/a9/ea8475e003/3/full.jsonl",
       "content_hash": "/a9/ea8475e003/3/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/a9/ea8475e003/4/metadata.json",
+      "transcript": "/a9/ea8475e003/4/full.jsonl",
+      "content_hash": "/a9/ea8475e003/4/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
