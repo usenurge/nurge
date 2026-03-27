@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "c58bf66d9b18",
+  "strategy": "manual-commit",
+  "branch": "feat/server-side-reply-handling",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "cmd/conn/disconnect.go",
+    "cmd/conn/verify.go",
+    "convex/connect.ts",
+    "convex/http.ts",
+    "internal/account/convex_api.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c5/8bf66d9b18/0/metadata.json",
+      "transcript": "/c5/8bf66d9b18/0/full.jsonl",
+      "content_hash": "/c5/8bf66d9b18/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
