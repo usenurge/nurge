@@ -1,0 +1,33 @@
+What have we build as a sysyetem - whata re the capabilities and flow and the security and error handling for this project nurge, learn fro the code, map userflows and everything around it
+
+---
+
+add integrations context and how many of them are set with env variables configured
+
+---
+
+and these are set for multi tenant operations?
+
+---
+
+okay. Now how will the outbound work? the flow of outbound
+
+---
+
+resume
+
+---
+
+how many dfferent types of ways in which prospects can be enrolled and then what happens for every flow?
+
+---
+
+save entire conversation as such in a doc
+
+---
+
+how many dfferent types of ways in which prospects can be enrolled and then what happens for every flow?
+
+---
+
+write this to the same doc
