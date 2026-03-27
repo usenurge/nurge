@@ -3,7 +3,7 @@
   "checkpoint_id": "914f810359bc",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "cmd/email/send.go",
     "docs/system-map.md",
@@ -28,13 +28,19 @@
       "transcript": "/91/4f810359bc/2/full.jsonl",
       "content_hash": "/91/4f810359bc/2/content_hash.txt",
       "prompt": "/91/4f810359bc/2/prompt.txt"
+    },
+    {
+      "metadata": "/91/4f810359bc/3/metadata.json",
+      "transcript": "/91/4f810359bc/3/full.jsonl",
+      "content_hash": "/91/4f810359bc/3/content_hash.txt",
+      "prompt": "/91/4f810359bc/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 315,
-    "cache_creation_tokens": 115199,
-    "cache_read_tokens": 4532069,
-    "output_tokens": 23437,
-    "api_call_count": 74
+    "input_tokens": 321,
+    "cache_creation_tokens": 136247,
+    "cache_read_tokens": 4618457,
+    "output_tokens": 24136,
+    "api_call_count": 78
   }
 }

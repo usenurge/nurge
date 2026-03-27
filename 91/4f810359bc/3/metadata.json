@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "914f810359bc",
+  "session_id": "c83695ae-49ca-4dcf-b68e-87b46000dc0b",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-27T10:49:33.69974Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "internal/connector/definitions/gmail_credentials.json"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "a86cd4cf6bfe",
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 21048,
+    "cache_read_tokens": 86388,
+    "output_tokens": 699,
+    "api_call_count": 4
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-27T10:49:33.630843Z",
+    "agent_lines": 1,
+    "human_added": 1375,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1376,
+    "agent_percentage": 0.07267441860465117
+  }
+}
