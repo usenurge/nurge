@@ -3,7 +3,7 @@
   "checkpoint_id": "24c9d711f452",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "convex/slack.ts",
     "internal/connector/definitions/slack.yaml"
@@ -32,13 +32,19 @@
       "transcript": "/24/c9d711f452/3/full.jsonl",
       "content_hash": "/24/c9d711f452/3/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/24/c9d711f452/4/metadata.json",
+      "transcript": "/24/c9d711f452/4/full.jsonl",
+      "content_hash": "/24/c9d711f452/4/content_hash.txt",
+      "prompt": "/24/c9d711f452/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 236,
-    "cache_creation_tokens": 605352,
-    "cache_read_tokens": 21327302,
-    "output_tokens": 89793,
-    "api_call_count": 145
+    "input_tokens": 354,
+    "cache_creation_tokens": 766421,
+    "cache_read_tokens": 25081281,
+    "output_tokens": 124517,
+    "api_call_count": 206
   }
 }
