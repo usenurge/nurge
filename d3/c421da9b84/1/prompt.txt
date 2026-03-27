@@ -11,3 +11,7 @@ ok
 ---
 
 slack is good as other connectors?
+
+---
+
+make slack ironclad
