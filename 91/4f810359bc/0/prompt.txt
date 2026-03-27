@@ -1,0 +1,49 @@
+i ahve two separate auths, gmail. which oen si sgued to send emails?
+
+---
+
+698033720622-ha04688roce6b33tfnf5p1m3ltvfpm87.apps.googleusercontent.com this client id?
+
+---
+
+698033720622-ha04688roce6b33tfnf5p1m3ltvfpm87.apps.googleusercontent.com this client id?
+
+---
+
+continue
+
+---
+
+can we use 698033720622-ha04688roce6b33tfnf5p1m3ltvfpm87.apps.googleusercontent.com this to send emails?
+
+---
+
+how do we sedn email, direct from CLI and convex too right
+
+---
+
+how do we sedn email, direct from CLI and convex too right
+
+---
+
+no firt tell me how many credentials we need?
+
+---
+
+keep one from the same project and remove the rest
+
+---
+
+i could see my dev version routing through unipile
+
+---
+
+can we removve unipile completely for sending emails, bith from CLI and convex and stop connecting gmail via unipile?
+
+---
+
+okay do this
+
+---
+
+implement directly
