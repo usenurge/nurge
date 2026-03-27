@@ -1,0 +1,56 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "2eb6b75ce7bb",
+  "strategy": "manual-commit",
+  "branch": "feat/server-side-reply-handling",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "README.md",
+    "cmd/conn/connect.go",
+    "cmd/conn/disconnect.go",
+    "cmd/conn/verify.go",
+    "convex/_generated/api.d.ts",
+    "convex/connect.ts",
+    "convex/crypto.ts",
+    "convex/gmailApi.ts",
+    "convex/http.ts",
+    "convex/outcomeDetection.ts",
+    "convex/replyDrafts.ts",
+    "convex/schema.ts",
+    "convex/slack.ts",
+    "convex/webhook.ts",
+    "internal/account/auth.go",
+    "internal/account/convex_api.go",
+    "internal/account/google.go",
+    "internal/account/google_test.go",
+    "internal/account/token.go",
+    "internal/account/token_test.go",
+    "internal/connector/credentials.go",
+    "internal/connector/definitions/hubspot.yaml",
+    "internal/connector/generic.go",
+    "internal/connector/generic_test.go",
+    "internal/connector/health.go",
+    "internal/connector/health_test.go",
+    "internal/email/client.go",
+    "internal/project/lock_windows.go",
+    "internal/project/skills/setup/SKILL.md",
+    "internal/project/skills/setup/phase-1-connect.md",
+    "internal/securefile/securefile.go",
+    "internal/securefile/securefile_test.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2e/b6b75ce7bb/0/metadata.json",
+      "transcript": "/2e/b6b75ce7bb/0/full.jsonl",
+      "content_hash": "/2e/b6b75ce7bb/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
