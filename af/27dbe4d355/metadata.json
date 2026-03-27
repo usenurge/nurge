@@ -3,7 +3,7 @@
   "checkpoint_id": "af27dbe4d355",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "internal/account/convex_api.go",
     "internal/connector/generic_auth.go",
@@ -27,13 +27,19 @@
       "transcript": "/af/27dbe4d355/2/full.jsonl",
       "content_hash": "/af/27dbe4d355/2/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/af/27dbe4d355/3/metadata.json",
+      "transcript": "/af/27dbe4d355/3/full.jsonl",
+      "content_hash": "/af/27dbe4d355/3/content_hash.txt",
+      "prompt": "/af/27dbe4d355/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 229,
-    "cache_creation_tokens": 596702,
-    "cache_read_tokens": 20382842,
-    "output_tokens": 85457,
-    "api_call_count": 140
+    "input_tokens": 252,
+    "cache_creation_tokens": 673839,
+    "cache_read_tokens": 21939713,
+    "output_tokens": 91831,
+    "api_call_count": 160
   }
 }
