@@ -19,3 +19,7 @@ can we build the next import hing other thant he 1000 dollar operator?
 ---
 
 build and wire this
+
+---
+
+build this - but at session start the banner should only show the most important thing not everything
