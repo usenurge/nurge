@@ -1,0 +1,1 @@
+do an edgecase analysis on the entire codebase and tell me, every important blocks first and then the latter the next - create an edgecase report

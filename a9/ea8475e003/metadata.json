@@ -7,7 +7,10 @@
   "files_touched": [
     "convex/crmWebhook.ts",
     "convex/crons.ts",
-    "convex/http.ts"
+    "convex/http.ts",
+    "convex/outcomeDetection.ts",
+    "convex/outcomeLearning.ts",
+    "docs/remote-trigger-reply-drafter.md"
   ],
   "sessions": [
     {
@@ -21,13 +24,19 @@
       "transcript": "/a9/ea8475e003/1/full.jsonl",
       "content_hash": "/a9/ea8475e003/1/content_hash.txt",
       "prompt": "/a9/ea8475e003/1/prompt.txt"
+    },
+    {
+      "metadata": "/a9/ea8475e003/2/metadata.json",
+      "transcript": "/a9/ea8475e003/2/full.jsonl",
+      "content_hash": "/a9/ea8475e003/2/content_hash.txt",
+      "prompt": "/a9/ea8475e003/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2946,
-    "cache_creation_tokens": 670322,
-    "cache_read_tokens": 28959026,
-    "output_tokens": 114088,
-    "api_call_count": 195
+    "input_tokens": 2949,
+    "cache_creation_tokens": 682567,
+    "cache_read_tokens": 28970754,
+    "output_tokens": 114119,
+    "api_call_count": 196
   }
 }
