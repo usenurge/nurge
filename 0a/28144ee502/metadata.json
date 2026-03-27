@@ -3,7 +3,7 @@
   "checkpoint_id": "0a28144ee502",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "cmd/hook/banner.go",
     "cmd/hook/hook.go",
@@ -33,13 +33,19 @@
       "transcript": "/0a/28144ee502/3/full.jsonl",
       "content_hash": "/0a/28144ee502/3/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/0a/28144ee502/4/metadata.json",
+      "transcript": "/0a/28144ee502/4/full.jsonl",
+      "content_hash": "/0a/28144ee502/4/content_hash.txt",
+      "prompt": "/0a/28144ee502/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 254,
-    "cache_creation_tokens": 610630,
-    "cache_read_tokens": 25309542,
-    "output_tokens": 94499,
-    "api_call_count": 163
+    "input_tokens": 386,
+    "cache_creation_tokens": 780416,
+    "cache_read_tokens": 30414195,
+    "output_tokens": 135205,
+    "api_call_count": 238
   }
 }
