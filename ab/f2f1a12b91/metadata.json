@@ -3,7 +3,7 @@
   "checkpoint_id": "abf2f1a12b91",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "docs/superpowers/specs/2026-03-27-integration-creator-design.md"
   ],
@@ -25,13 +25,19 @@
       "transcript": "/ab/f2f1a12b91/2/full.jsonl",
       "content_hash": "/ab/f2f1a12b91/2/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/ab/f2f1a12b91/3/metadata.json",
+      "transcript": "/ab/f2f1a12b91/3/full.jsonl",
+      "content_hash": "/ab/f2f1a12b91/3/content_hash.txt",
+      "prompt": "/ab/f2f1a12b91/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 16,
-    "cache_creation_tokens": 15296,
-    "cache_read_tokens": 656713,
-    "output_tokens": 8242,
-    "api_call_count": 10
+    "input_tokens": 13537,
+    "cache_creation_tokens": 53538,
+    "cache_read_tokens": 881632,
+    "output_tokens": 17117,
+    "api_call_count": 15
   }
 }
