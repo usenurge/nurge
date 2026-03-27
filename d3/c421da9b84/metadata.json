@@ -3,9 +3,11 @@
   "checkpoint_id": "d3c421da9b84",
   "strategy": "manual-commit",
   "branch": "feat/server-side-reply-handling",
-  "checkpoints_count": 2,
+  "checkpoints_count": 4,
   "files_touched": [
-    "convex/schema.ts"
+    "convex/schema.ts",
+    "convex/slack.ts",
+    "internal/connector/definitions/slack.yaml"
   ],
   "sessions": [
     {
@@ -13,13 +15,19 @@
       "transcript": "/d3/c421da9b84/0/full.jsonl",
       "content_hash": "/d3/c421da9b84/0/content_hash.txt",
       "prompt": "/d3/c421da9b84/0/prompt.txt"
+    },
+    {
+      "metadata": "/d3/c421da9b84/1/metadata.json",
+      "transcript": "/d3/c421da9b84/1/full.jsonl",
+      "content_hash": "/d3/c421da9b84/1/content_hash.txt",
+      "prompt": "/d3/c421da9b84/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 72586,
-    "cache_creation_tokens": 110205,
-    "cache_read_tokens": 918589,
-    "output_tokens": 11232,
-    "api_call_count": 7
+    "input_tokens": 72609,
+    "cache_creation_tokens": 131455,
+    "cache_read_tokens": 6583176,
+    "output_tokens": 20937,
+    "api_call_count": 26
   }
 }
