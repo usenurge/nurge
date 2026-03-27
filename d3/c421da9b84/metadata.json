@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.1",
+  "checkpoint_id": "d3c421da9b84",
+  "strategy": "manual-commit",
+  "branch": "feat/server-side-reply-handling",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "convex/schema.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d3/c421da9b84/0/metadata.json",
+      "transcript": "/d3/c421da9b84/0/full.jsonl",
+      "content_hash": "/d3/c421da9b84/0/content_hash.txt",
+      "prompt": "/d3/c421da9b84/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72586,
+    "cache_creation_tokens": 110205,
+    "cache_read_tokens": 918589,
+    "output_tokens": 11232,
+    "api_call_count": 7
+  }
+}
