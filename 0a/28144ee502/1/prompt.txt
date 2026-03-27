@@ -1,0 +1,41 @@
+is hubspot integrtion complete? can i build a integration creator in this? suppose a integration is not available, they can ask and claude code builds it, will be possible for us to be get this integration made by a user added in product locally as a PR to be merged after review?
+
+---
+
+yes. this if we build and create a flow would be interesting. users may never have git, but a tutorial inside the codebase would be amazing
+
+---
+
+s if the connector i not available, then it hould be built, so the creator can check and tell them if this can be created?
+
+---
+
+C
+
+---
+
+not only direct one, rest, raise an issue in git automatically? usesrs may not have git?
+
+---
+
+yes, it basically tells claude code users use how to build the connectors
+
+---
+
+3, but create a flow for me
+
+---
+
+yes but what are the edgecases as per you?
+
+---
+
+this was supposed to be a mind blowing feature that gets me street cred, how can this be done well, think about all the pitfalls
+
+---
+
+yes, also context7 MCP can help with documentation retrieval easily
+
+---
+
+instead of connector catalog, Can I preintall a context7 MCP inside the system to do this? or catelog too? anything that is not token instensive
