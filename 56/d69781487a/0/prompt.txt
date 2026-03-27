@@ -139,3 +139,7 @@ also GMAIL in terms no CRM
 ---
 
 create a branch, rest of the things you can check
+
+---
+
+check for edgecases
