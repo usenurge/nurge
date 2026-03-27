@@ -1,0 +1,13 @@
+as a CTo and Engineering Manager, examine the codebase and find all fails under any category normally that you find
+
+---
+
+create all fix now and build the corecard again
+
+---
+
+do a test again and tell me if anything changed
+
+---
+
+How can the entire report card be A?
