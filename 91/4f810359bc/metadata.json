@@ -6,6 +6,7 @@
   "checkpoints_count": 1,
   "files_touched": [
     "cmd/email/send.go",
+    "docs/system-map.md",
     "internal/account/convex_api.go",
     "internal/connector/definitions/gmail_credentials.json"
   ],
@@ -21,6 +22,12 @@
       "transcript": "/91/4f810359bc/1/full.jsonl",
       "content_hash": "/91/4f810359bc/1/content_hash.txt",
       "prompt": "/91/4f810359bc/1/prompt.txt"
+    },
+    {
+      "metadata": "/91/4f810359bc/2/metadata.json",
+      "transcript": "/91/4f810359bc/2/full.jsonl",
+      "content_hash": "/91/4f810359bc/2/content_hash.txt",
+      "prompt": "/91/4f810359bc/2/prompt.txt"
     }
   ],
   "token_usage": {
