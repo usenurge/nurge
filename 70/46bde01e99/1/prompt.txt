@@ -1,0 +1,450 @@
+setup slack api
+
+---
+
+10819252288816.10788919034246 id
+46735cd5b4dfaa4bf47db9e0032f3e25 Client secret
+da2983aaebc6362fe34681078faeaea1 signing secret
+
+---
+
+is it set in production?
+
+---
+
+yes - all keys should be in dev and producton
+
+---
+
+what about hubspaot and Gmail and other?
+
+---
+
+send an email to sandeep asking him to bring laptop sandeep@datazip.io
+
+---
+
+claude
+╭─── Claude Code v2.1.85 ────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting started                                          │
+│                 Welcome back Rejoe!                │ Run /init to create a CLAUDE.md file with instructions for Claude │
+│                                                    │ ───────────────────────────────────────────────────────────────── │
+│                       ▐▛███▜▌                      │ Recent activity                                                   │
+│                      ▝▜█████▛▘                     │ No recent activity                                                │
+│                        ▘▘ ▝▝                       │                                                                   │
+│   Opus 4.6 (1M context) with hi… · Claude Max ·    │                                                                   │
+│   rejoe@nurge.app's Organization                   │                                                                   │
+│              ~/Projects/nurgeoutbound              │                                                                   │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  ⎿  SessionStart:startup says: 
+                                                                                                                                                  
+     Powered by Nurge
+       nurge dev                                                                                                                                  
+       Hey Rejoe                                                                                                                                
+       Remote sync unavailable — using last local state
+       Pipeline: 0 contacted | 0 replied  
+       >> No leads in pipeline. Run /nurge:prospects to build a list.
+
+       Updating to v0.1.5...
+
+❯ can you send an email to sandeep@datazip.io and aski him to bring laptop                                                                        
+                                                                           
+⏺ Here's the draft before I send:                                                                                                                 
+                                                                                                                                                
+  To: sandeep@datazip.io                                                                                                                          
+  Subject: Bring your laptop              
+  Body: Hey Sandeep, can you bring your laptop? Thanks!                                                                                           
+                                                                
+  Want me to send this? Let me check the nurge send command format first.                                                                         
+                                                                
+⏺ Bash(nurge send --help 2>&1 | head -40)                                                                                                         
+  ⎿  Send an email through your connected Gmail account directly via the Gmail API.
+                                                                                                                                                  
+     Usage:                               
+     … +13 lines (ctrl+o to expand)                                                                                                               
+                                                                                                                                                  
+⏺ Ready to send. Here's what I'll run:
+                                                                                                                                                  
+  nurge send \                                                                                                                                    
+    --to "sandeep@datazip.io" \   
+    --subject "Bring your laptop" \                                                                                                               
+    --body "Hey Sandeep, can you bring your laptop? Thanks!" \  
+    --send-type manual                                                                                                                            
+                                                                
+  Should I go ahead and send it?                                                                                                                  
+                                          
+❯ yes                                                                                                                                             
+                                                                
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!" --send-type    
+      manual)                                                   
+  ⎿  Error: Exit code 1                                                                                                                           
+     Error: send failed: sending email: Post "https://gmail.googleapis.com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false": Post 
+     "https://oauth2.googleapis.com/token": context canceled                                                                                      
+     Usage:                                                                                                                                       
+       nurge send [flags]                                                                                                                         
+                                          
+     Flags:                                                                                                                                       
+           --body string           Email body (plain text)      
+           --campaign string       Optional campaign name stored on the sequence enrollment
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on sequence enrollment
+     … +6 lines (ctrl+o to see all)
+
+⏺ The send failed — looks like the Gmail OAuth token has expired or the authentication was interrupted. You may need to re-authenticate. Try
+  running:
+                                                                                                                                                  
+  ! nurge auth login
+                                                                                                                                                  
+  This will open the Gmail OAuth flow in your browser so you can re-authorize. Once that's done, I'll retry the send.                             
+                                                                                                                                                  
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯                                                               
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Opus 4.6 (1M context) │ ✍️  2% │ nurgeoutbound (main*) │ ● high
+  current ●●●●●●○○○○  61% ⟳ 5:30pm                                                                                                                
+  weekly  ●●●●●●●●○○  89% ⟳ mar 27, 8:30pm                      
+  ⏵⏵ don't ask on (shift+tab to cycle)
+
+---
+
+claude
+╭─── Claude Code v2.1.85 ─────────────────────────────────────────────╮
+│                                                    │ Tips for       │
+│                 Welcome back Rejoe!                │ getting        │
+│                                                    │ started        │
+│                       ▐▛███▜▌                      │ Run /init to … │
+│                      ▝▜█████▛▘                     │ ────────────── │
+│                        ▘▘ ▝▝                       │ Recent         │
+│   Opus 4.6 (1M context) with hi… · Claude Max ·    │ activity       │
+│   rejoe@nurge.app's Organization                   │ No recent act… │
+│              ~/Projects/nurgeoutbound              │                │
+╰─────────────────────────────────────────────────────────────────────╯
+  ⎿  SessionStart:startup says:
+
+     Powered by Nurge
+       nurge dev
+       Hey Rejoe
+       Remote sync unavailable — using last local state
+       Pipeline: 0 contacted | 0 replied
+       >> No leads in pipeline. Run /nurge:prospects to build a list.
+
+       Updating to v0.1.5...
+
+❯ can you send an email to sandeep@datazip.io and aski him to bring    
+laptop                                                                 
+
+⏺ Here's the draft before I send:
+
+  To: sandeep@datazip.io
+  Subject: Bring your laptop
+  Body: Hey Sandeep, can you bring your laptop? Thanks!
+
+  Want me to send this? Let me check the nurge send command format
+  first.
+
+⏺ Bash(nurge send --help 2>&1 | head -40)
+  ⎿  Send an email through your connected Gmail account directly v
+     ia the Gmail API.
+     … +18 lines (ctrl+o to expand)
+
+⏺ Ready to send. Here's what I'll run:
+
+  nurge send \
+    --to "sandeep@datazip.io" \
+    --subject "Bring your laptop" \
+    --body "Hey Sandeep, can you bring your laptop? Thanks!" \
+    --send-type manual
+
+  Should I go ahead and send it?
+
+❯ yes                                                                  
+
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!"
+      --send-type manual)
+  ⎿  Error: Exit code 1
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false":
+     Post "https://oauth2.googleapis.com/token": context canceled
+     Usage:
+       nurge send [flags]
+
+     Flags:
+           --body string           Email body (plain text)
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment
+     … +6 lines (ctrl+o to see all)CC email address
+           --contact-name string   Optional prospect name stored on
+     sequence enrollment
+
+
+⏺ The send failed — looks like the Gmail OAuth token has expired or the
+   authentication was interrupted. You may need to re-authenticate. Try
+   running:
+
+  ! nurge auth login
+
+  This will open the Gmail OAuth flow in your browser so you can
+  re-authorize. Once that's done, I'll retry the send.
+
+❯ send the eail                                                        
+                
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your      
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!"
+      --send-type manual)                                              
+  ⎿  Error: Exit code 1                   
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false": 
+     Post "https://oauth2.googleapis.com/token": context canceled
+     Usage:                                                            
+       nurge send [flags]             
+                                                                       
+     Flags:                                                     
+           --body string           Email body (plain text)
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment             
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on
+     sequence enrollment
+     … +6 lines (ctrl+o to see all)
+
+⏺ Same auth error. Your Gmail OAuth token seems expired. Please
+  re-authenticate by running:
+                                                                       
+  ! nurge auth login
+                                                                       
+  Once you've logged back in, I'll retry the send.              
+                                                                       
+❯ nurge auth login                                                     
+Error: accepts at most 1 arg(s), received 2                            
+Usage:                                                                 
+  nurge init [directory] [flags]                                       
+                                                                       
+Flags:                                                                 
+      --force        Re-run all steps even if already completed        
+  -h, --help         help for init                                     
+      --skip-hooks   Skip Claude Code hook installation                
+      --verbose      Show detailed output                              
+                                                                       
+
+⏺ Looks like the auth is part of nurge init. Try running:
+
+  ! nurge init                                                         
+                                                                       
+  This should re-run the setup including the Gmail OAuth flow. Once    
+  that's done, I'll retry sending the email.                           
+                                                                       
+✻ Cogitated for 35s                                             
+                                          
+❯ send the email now                                                   
+                                      
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your      
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!" 
+      --send-type manual)                                            
+  ⎿  Error: Exit code 1                   
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false": 
+     Post "https://oauth2.googleapis.com/token": context canceled      
+     Usage:                                                          
+       nurge send [flags]         
+                                                                       
+     Flags:                           
+           --body string           Email body (plain text)             
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment         
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on 
+     sequence enrollment
+     … +6 lines (ctrl+o to see all)
+  ⎿  529 {"type":"error","error":{"type":"overloaded_error","message":"
+     Overloaded. https://docs.claude.com/en/api/errors"},"request_id":"
+     req_011CZTKu5S6X3DY76X9efKEf"}                                    
+     Retrying in 5 seconds… (attempt 4/10)                           
+
+✽ Choreographing…                                                      
+  ⎿  Tip: Create skills by adding .md files to .claude/skills/ in your 
+     project or ~/.claude/skills/ for skills that work in any project  
+                                                                
+───────────────────────────────────────────────────────────────────────
+❯                                         
+───────────────────────────────────────────────────────────────────────
+  Opus 4.6 (1M context) │ ✍️  2% │ nurgeoutbound (main*) │ ● high
+  current ●●●●●●○○○○  62% ⟳ 5:30pm
+  weekly  ●●●●●●●●○○  89% ⟳ mar 27, 8:30pm
+  ⏵⏵ don't ask on (shift+tab to cycle)
+
+---
+
+claude
+╭─── Claude Code v2.1.85 ─────────────────────────────────────────────╮
+│                                                    │ Tips for       │
+│                 Welcome back Rejoe!                │ getting        │
+│                                                    │ started        │
+│                       ▐▛███▜▌                      │ Run /init to … │
+│                      ▝▜█████▛▘                     │ ────────────── │
+│                        ▘▘ ▝▝                       │ Recent         │
+│   Opus 4.6 (1M context) with hi… · Claude Max ·    │ activity       │
+│   rejoe@nurge.app's Organization                   │ No recent act… │
+│              ~/Projects/nurgeoutbound              │                │
+╰─────────────────────────────────────────────────────────────────────╯
+  ⎿  SessionStart:startup says:
+
+     Powered by Nurge
+       nurge dev
+       Hey Rejoe
+       Remote sync unavailable — using last local state
+       Pipeline: 0 contacted | 0 replied
+       >> No leads in pipeline. Run /nurge:prospects to build a list.
+
+       Updating to v0.1.5...
+
+❯ can you send an email to sandeep@datazip.io and aski him to bring    
+laptop                                                                 
+
+⏺ Here's the draft before I send:
+
+  To: sandeep@datazip.io
+  Subject: Bring your laptop
+  Body: Hey Sandeep, can you bring your laptop? Thanks!
+
+  Want me to send this? Let me check the nurge send command format
+  first.
+
+⏺ Bash(nurge send --help 2>&1 | head -40)
+  ⎿  Send an email through your connected Gmail account directly v
+     ia the Gmail API.
+     … +18 lines (ctrl+o to expand)
+
+⏺ Ready to send. Here's what I'll run:
+
+  nurge send \
+    --to "sandeep@datazip.io" \
+    --subject "Bring your laptop" \
+    --body "Hey Sandeep, can you bring your laptop? Thanks!" \
+    --send-type manual
+
+  Should I go ahead and send it?
+
+❯ yes                                                                  
+
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!"
+      --send-type manual)
+  ⎿  Error: Exit code 1
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false":
+     Post "https://oauth2.googleapis.com/token": context canceled
+     Usage:
+       nurge send [flags]
+
+     Flags:
+           --body string           Email body (plain text)
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment
+     … +6 lines (ctrl+o to see all)CC email address
+           --contact-name string   Optional prospect name stored on
+     sequence enrollment
+
+
+⏺ The send failed — looks like the Gmail OAuth token has expired or the
+   authentication was interrupted. You may need to re-authenticate. Try
+   running:
+
+  ! nurge auth login
+
+  This will open the Gmail OAuth flow in your browser so you can
+  re-authorize. Once that's done, I'll retry the send.
+
+❯ send the eail                                                        
+                
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your      
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!"
+      --send-type manual)                                              
+  ⎿  Error: Exit code 1                   
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false": 
+     Post "https://oauth2.googleapis.com/token": context canceled
+     Usage:                                                            
+       nurge send [flags]             
+                                                                       
+     Flags:                                                     
+           --body string           Email body (plain text)
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment             
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on
+     sequence enrollment
+     … +6 lines (ctrl+o to see all)
+
+⏺ Same auth error. Your Gmail OAuth token seems expired. Please
+  re-authenticate by running:
+                                                                       
+  ! nurge auth login
+                                                                       
+  Once you've logged back in, I'll retry the send.              
+                                                                       
+❯ nurge auth login                                                     
+Error: accepts at most 1 arg(s), received 2                            
+Usage:                                                                 
+  nurge init [directory] [flags]                                       
+                                                                       
+Flags:                                                                 
+      --force        Re-run all steps even if already completed        
+  -h, --help         help for init                                     
+      --skip-hooks   Skip Claude Code hook installation                
+      --verbose      Show detailed output                              
+                                                                       
+
+⏺ Looks like the auth is part of nurge init. Try running:
+
+  ! nurge init                                                         
+                                                                       
+  This should re-run the setup including the Gmail OAuth flow. Once    
+  that's done, I'll retry sending the email.                           
+                                                                       
+✻ Cogitated for 35s                                             
+                                          
+❯ send the email now                                                   
+                                      
+⏺ Bash(nurge send --to "sandeep@datazip.io" --subject "Bring your      
+      laptop" --body "Hey Sandeep, can you bring your laptop? Thanks!" 
+      --send-type manual)                                            
+  ⎿  Error: Exit code 1                   
+     Error: send failed: sending email: Post "https://gmail.googleapis.
+     com/gmail/v1/users/me/messages/send?alt=json&prettyPrint=false": 
+     Post "https://oauth2.googleapis.com/token": context canceled      
+     Usage:                                                          
+       nurge send [flags]         
+                                                                       
+     Flags:                           
+           --body string           Email body (plain text)             
+           --campaign string       Optional campaign name stored on the
+      sequence enrollment         
+           --cc string             CC email address
+           --contact-name string   Optional prospect name stored on 
+     sequence enrollment
+     … +6 lines (ctrl+o to see all)
+  ⎿  529 {"type":"error","error":{"type":"overloaded_error","message":"
+     Overloaded. https://docs.claude.com/en/api/errors"},"request_id":"
+     req_011CZTKu5S6X3DY76X9efKEf"}                                    
+     Retrying in 5 seconds… (attempt 4/10)                           
+
+✽ Choreographing…                                                      
+  ⎿  Tip: Create skills by adding .md files to .claude/skills/ in your 
+     project or ~/.claude/skills/ for skills that work in any project  
+                                                                
+───────────────────────────────────────────────────────────────────────
+❯                                         
+───────────────────────────────────────────────────────────────────────
+  Opus 4.6 (1M context) │ ✍️  2% │ nurgeoutbound (main*) │ ● high
+  current ●●●●●●○○○○  62% ⟳ 5:30pm
+  weekly  ●●●●●●●●○○  89% ⟳ mar 27, 8:30pm
+  ⏵⏵ don't ask on (shift+tab to cycle)
+
+---
+
+merge all the brancehs to main
+
+---
+
+commot and merge
