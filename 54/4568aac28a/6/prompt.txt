@@ -1,0 +1,81 @@
+from process.md. What can be the best possible way yo go with proces after setup is done
+
+---
+
+for today's top prospects? how does adding propects work here?
+
+---
+
+maybe ask during setup when do they have to ource?
+
+---
+
+what you would have done?
+
+---
+
+ok. so how does the process change?
+
+---
+
+also with the no of emails and the limit, always show in dashboard how many more lead are ourced and remind to add leads in the startup hook
+
+---
+
+ok. do you have some edge cases in mind?
+
+---
+
+20 nis new outreach and follow ups are different
+
+---
+
+solve all of it
+
+---
+
+also setup shoould end with the task
+
+---
+
+ok, iolement this. but doesnt sourcing nned to be in a loop?
+
+---
+
+ok
+
+---
+
+implement this
+
+---
+
+<task-notification>
+<task-id>afb206d3dc88c5ed7</task-id>
+<tool-use-id>toolu_01YLWpZKtdAZZohVXkk5thoM</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/afb206d3dc88c5ed7.output</output-file>
+<status>completed</status>
+<summary>Agent "Create skill markdown files" completed</summary>
+<result>All three files are done. Here is a summary of what was written:
+
+**File 1 -- Created:** `/Users/rejoesudarsan/Projects/nurgesh/internal/project/skills/setup/phase-4-first-task.md`
+- New Phase 4 setup skill that transitions the user from "setup complete" into their first actionable task
+- Contains a decision table (zero history, CRM contacts, CSV import, unfollowed contacts, active history, fallback) to pick the right first task
+- Shows the pipeline dashboard before and after, sets `first_task_completed` config flag on completion
+
+**File 2 -- Updated:** `/Users/rejoesudarsan/Projects/nurgesh/internal/project/skills/setup/SKILL.md`
+- Updated the `setup_completed` resume logic to check for `first_task_completed` -- if missing, routes to Phase 4 instead of stopping
+- Added Phase 4 to the Flow section as step 4
+- Added Phase 4 Resume Key table after Phase 2 Resume Keys
+
+**File 3 -- Updated:** `/Users/rejoesudarsan/Projects/nurgesh/internal/project/skills/setup/skill-generation.md`
+- Replaced the minimal `nurge-pipeline` section with the comprehensive version including daily loop, pipeline dashboard format, smart nudge logic table, source phase behavior, source effectiveness, and learn phase health check
+- Updated the CLI Commands table row for nurge-pipeline to `nurge pipeline status --format json`, `nurge config show --format json`
+- Updated the Config table row for nurge-pipeline to include `personas`</result>
+<usage><total_tokens>31607</total_tokens><tool_uses>15</tool_uses><duration_ms>97894</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-rejoesudarsan-Projects-nurgesh/6b64eb9f-74b9-423e-ac24-a343a9cf3819/tasks/afb206d3dc88c5ed7.output
+
+---
+
+check if everything has been done?
