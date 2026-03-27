@@ -8,7 +8,7 @@ set -euo pipefail
 #   curl -fsSL https://install.nurge.sh | bash -s -- v0.1.0
 
 REPO="usenurge/nurge"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
 BINARY="nurge"
 
 # --- Helpers ---
@@ -97,14 +97,18 @@ install() {
   chmod +x "$bin_path"
 
   # Install to target directory
-  if [ -w "$INSTALL_DIR" ]; then
-    mv "$bin_path" "${INSTALL_DIR}/${BINARY}"
-  else
-    info "Need sudo to install to ${INSTALL_DIR}"
-    sudo mv "$bin_path" "${INSTALL_DIR}/${BINARY}"
+  if ! mkdir -p "$INSTALL_DIR"; then
+    fail "Unable to create ${INSTALL_DIR}. Set INSTALL_DIR to a directory you own, such as \$HOME/.local/bin."
   fi
+  mv "$bin_path" "${INSTALL_DIR}/${BINARY}" || fail "Install failed. Set INSTALL_DIR to a writable directory you own."
 
   ok "Installed ${BINARY} ${version} to ${INSTALL_DIR}/${BINARY}"
+  case ":$PATH:" in
+    *":$INSTALL_DIR:"*) ;;
+    *)
+      warn "Add ${INSTALL_DIR} to your PATH: export PATH=\"${INSTALL_DIR}:\$PATH\""
+      ;;
+  esac
 }
 
 # --- Main ---
